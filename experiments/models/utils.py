@@ -1,18 +1,27 @@
+from pathlib import Path
+from typing import List, Dict, Any, Tuple
+
 import numpy as np
+import torch
+from torch import nn
+
 from opytimizer import Opytimizer
-from opytimizer.spaces.search import SearchSpace
+from opytimizer.utils.history import History
 from opytimizer.core.function import Function
+from opytimizer.core.optimizer import Optimizer
+from opytimizer.spaces.search import SearchSpace
 
 
-def optimize(metaheuristic,
-             target,
-             n_agents,
-             n_variables,
-             n_iterations,
-             lb,
-             ub,
-             hyperparams):
+def optimize(metaheuristic: Optimizer,
+             target: callable,
+             n_agents: int,
+             n_variables: int,
+             n_iterations: int,
+             lb: List[float],
+             ub: List[float],
+             hyperparams: Dict[str, Any]) -> History:
     """Abstract all the Opytimizer mechanics into a single method."""
+
     space = SearchSpace(n_agents, n_variables, n_iterations, lb, ub)
     optimizer = metaheuristic(hyperparams=hyperparams)
 
@@ -20,7 +29,8 @@ def optimize(metaheuristic,
     return task.start()
 
 
-def get_top_models(history, n_agents):
+def get_top_models(history: History,
+                   n_agents: int) -> List[Tuple[int, int, list]]:
     """Gets all the best models found during optimization."""
 
     best_indices = list()
@@ -39,3 +49,80 @@ def get_top_models(history, n_agents):
             best_indices.append((index, cumulative_index, fitness))
 
     return best_indices
+
+
+def load_models(models_home: str,
+                meta_prefix: str,
+                model_indices: List[int]) -> List[nn.Module]:
+    """Loads all models
+
+    # Arguments
+        models_home: The root folder of all models.
+        meta_prefix: All model filenames must start with this
+            prefix, for instance
+            `models_home/meta_prefix_[model_index].txt`
+        model_indices: Index of the models to be loaded.
+
+    # Returns
+        List of the loaded models.
+    """
+    mask = meta_prefix + '_{}.pth'
+    models = list()
+    for index in model_indices:
+        filepath = Path(models_home, mask.format(index))
+        models.append(torch.load(filepath))
+    return models
+
+
+def predict_on_val(model: nn.Module,
+                   x_val: torch.Tensor,
+                   y_val: torch.LongTensor,
+                   destination: str) -> None:
+    """Computes the model predictions (outputs) for x_val.
+
+    # Arguments
+        model: PyTorch model.
+        x_val: Features tensor with shape `[n_samples, *]`.
+        y_val: Labels tensor with shape `[n_samples]`.
+        destination: Path of the text file with the computed
+            predictions.
+
+    # File layout:
+            n_samples, val_accuracy
+            logit_{00} logit_{01} ... logit_{0n}
+            logit_{10} logit_{11} ... logit_{1n}
+            ...
+            logit_{m0} logit_{m1} ... logit_{mn}
+    """
+    logits = model(x_val)
+    acc = ((logits.argmax(-1) == y_val).sum().float() / y_val.numel()).item()
+
+    def tensor2str(tensor):
+        return ' '.join(map(str, tensor.tolist()))
+
+    with open(destination, 'w') as dfile:
+        dfile.write('{} {}\n'.format(y_val.numel(), acc))
+        for logit in logits:
+            dfile.write('{}\n'.format(tensor2str(logit)))
+
+
+def store_predictions(y_val: torch.LongTensor,
+                      destination: str) -> None:
+    """Store the ground truth labels for the validation set.
+
+    # Arguments
+        y_val: Labels tensor with shape `[n_samples]`.
+        destination: Path of the text file with the computed
+            predictions.
+
+    # File layout:
+        n_samples
+        y_0
+        y_1
+        ...
+        y_n
+    """
+    with open(destination, 'w') as dfile:
+        dfile.write(f'{y_val.numel()}\n')
+        for label in y_val:
+            dfile.write(f'{label.item()}\n')

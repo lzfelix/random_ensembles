@@ -15,7 +15,7 @@ class SimpleNet(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x
+        return F.softmax(x, dim=-1)
 
     @staticmethod
     def metric(prediction: torch.Tensor, y_true: torch.Tensor) -> dict:
