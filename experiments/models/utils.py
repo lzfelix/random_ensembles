@@ -153,3 +153,8 @@ def load_labels(filepath: str) -> np.ndarray:
         if lineno > 0:
             labels.append(int(line.strip()))
     return np.asarray(labels, dtype=np.int32)
+
+
+def accuracy(y_pred: np.ndarray, y: np.ndarray) -> float:
+    """Computes y_pred accuracy."""
+    return (y_pred.argmax(-1) == y).sum() / y.size
