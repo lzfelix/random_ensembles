@@ -106,7 +106,25 @@ def predict_on_val(model: nn.Module,
             dfile.write('{}\n'.format(tensor2str(logit)))
 
 
-def store_predictions(y_val: torch.LongTensor,
+def load_predictions(filepath: str) -> np.ndarray:
+    """Loads predictions from the filepath.
+
+    # File layout:
+        n_samples, val_accuracy
+        logit_{00} logit_{01} ... logit_{0n}
+        logit_{10} logit_{11} ... logit_{1n}
+        ...
+        logit_{m0} logit_{m1} ... logit_{mn}
+    """
+    all_preds = list()
+    for lineno, line in enumerate(open(filepath, 'r')):
+        if lineno > 0:
+            probabilities = list(map(float, line.split()))
+            all_preds.append(probabilities)
+    return np.asarray(all_preds)
+
+
+def store_labels(y_val: torch.LongTensor,
                       destination: str) -> None:
     """Store the ground truth labels for the validation set.
 
@@ -126,3 +144,12 @@ def store_predictions(y_val: torch.LongTensor,
         dfile.write(f'{y_val.numel()}\n')
         for label in y_val:
             dfile.write(f'{label.item()}\n')
+
+
+def load_labels(filepath: str) -> np.ndarray:
+    """Loads ground truth labels from the filepath."""
+    labels = list()
+    for lineno, line in enumerate(open(filepath, 'r')):
+        if lineno > 0:
+            labels.append(int(line.strip()))
+    return np.asarray(labels, dtype=np.int32)
