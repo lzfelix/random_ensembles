@@ -1,5 +1,5 @@
 numpy==1.15.2
 sklearn>=0.0.0
 torch==1.1.0
-flare
 opytimizer
+git+https://github.com/lzfelix/flare
