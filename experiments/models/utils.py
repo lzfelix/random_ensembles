@@ -53,25 +53,21 @@ def get_top_models(scoreboard: Dict[int, int],
     return list(zip(*selected))
 
 
-def load_models(models_home: str,
-                meta_prefix: str,
+def load_models(models_prefix: str,
                 model_indices: List[int]) -> List[nn.Module]:
     """Loads all models
 
     # Arguments
-        models_home: The root folder of all models.
-        meta_prefix: All model filenames must start with this
-            prefix, for instance
-            `models_home/meta_prefix_[model_index].txt`
+        models_prefix: All model filenames must start with this
+            prefix, for instance `models_home/meta_prefix_[model_index].txt`
         model_indices: Index of the models to be loaded.
 
-    # Returns
-        List of the loaded models.
+    # Return
+        List of yTorch models.
     """
-    mask = meta_prefix + '_{}.pth'
     models = list()
     for index in model_indices:
-        filepath = Path(models_home, mask.format(index))
+        filepath = f'{models_prefix}_{index}.pth'
         models.append(torch.load(filepath))
     return models
 
