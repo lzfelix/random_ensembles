@@ -11,6 +11,8 @@ from opytimizer.core.function import Function
 from opytimizer.core.optimizer import Optimizer
 from opytimizer.spaces.search import SearchSpace
 
+from flare import trainer
+
 
 def optimize(metaheuristic: Optimizer,
              target: callable,
@@ -29,26 +31,26 @@ def optimize(metaheuristic: Optimizer,
     return task.start()
 
 
-def get_top_models(history: History,
-                   n_agents: int) -> List[Tuple[int, int, list]]:
-    """Gets all the best models found during optimization."""
+def get_top_models(scoreboard: Dict[int, int],
+                   top_k: int) -> List[Tuple[int]]:
+    """Gets the `min(top_k, len(scoreboard))` best models with different fitness values.
 
-    best_indices = list()
-    for iter_no, iteration_best in enumerate(history.best_agent):
-        # Finding the actual index
-        position, fitness, index = iteration_best
-        cumulative_index = index + iter_no * n_agents
+    # Arguments
+        scoreboard: A dict mapping callno to fitness value.
+        top_k:
+    # Return
+        A: List of model indices
+        B: List of fitness values.
+    """
 
-        # Opytimizer discards the current iteration best if it is
-        # worse than the previous last solution. Check for that so
-        # each model is selected only once.
-        # Despite the name, history.agents contains all the agents
-        # values for the i-th iteration
-        actual_fitness = history.agents[iter_no][index][-1]
-        if np.isclose(actual_fitness, fitness) or iter_no == 0:
-            best_indices.append((index, cumulative_index, fitness))
-
-    return best_indices
+    sorted_scores = sorted(scoreboard.items(), key=lambda x: x[1])
+    selected = [sorted_scores[0]]
+    i = 1
+    while i < len(sorted_scores) and len(selected) < top_k:
+        if sorted_scores[i][1] != selected[-1][1]:
+            selected.append(sorted_scores[i])
+        i += 1
+    return list(zip(*selected))
 
 
 def load_models(models_home: str,
@@ -74,27 +76,30 @@ def load_models(models_home: str,
     return models
 
 
-def predict_on_val(model: nn.Module,
-                   x_val: torch.Tensor,
-                   y_val: torch.LongTensor,
-                   destination: str) -> None:
-    """Computes the model predictions (outputs) for x_val.
+def predict_persist(model,
+                    eval_gen,
+                    device,
+                    destination: str) -> None:
+    """Computes the model predictions and stores them in a text file.
 
     # Arguments
         model: PyTorch model.
-        x_val: Features tensor with shape `[n_samples, *]`.
-        y_val: Labels tensor with shape `[n_samples]`.
-        destination: Path of the text file with the computed
-            predictions.
+        eval_gen:
+        device:
+        destination: Path of the text file with the computed predictions.
 
     # File layout:
             n_samples, val_accuracy
-            logit_{00} logit_{01} ... logit_{0n}
-            logit_{10} logit_{11} ... logit_{1n}
+            logsoftmax_{00} logsoftmax_{01} ... logsoftmax_{0n}
+            logsoftmax_{10} logsoftmax_{11} ... logsoftmax_{1n}
             ...
-            logit_{m0} logit_{m1} ... logit_{mn}
+            logsoftmax_{m0} logsoftmax_{m1} ... logsoftmax_{mn}
     """
-    logits = model(x_val)
+
+    logits = trainer.predict_on_loader(model, eval_gen, device, verbosity=0)
+    y_val = [batch[1] for batch in eval_gen]
+    y_val = torch.cat(y_val).to(device)
+
     acc = ((logits.argmax(-1) == y_val).sum().float() / y_val.numel()).item()
 
     def tensor2str(tensor):
@@ -107,14 +112,15 @@ def predict_on_val(model: nn.Module,
 
 
 def load_predictions(filepath: str) -> np.ndarray:
-    """Loads predictions from the filepath.
+    """Loads predictions from the filepath. Recall that the returned values
+    are `log(softmax(z)) = log(p(y_i | x_j))`.
 
     # File layout:
         n_samples, val_accuracy
-        logit_{00} logit_{01} ... logit_{0n}
-        logit_{10} logit_{11} ... logit_{1n}
+        logsoftmax_{00} logsoftmax_{01} ... logsoftmax_{0n}
+        logsoftmax_{10} logsoftmax_{11} ... logsoftmax_{1n}
         ...
-        logit_{m0} logit_{m1} ... logit_{mn}
+        logsoftmax_{m0} logsoftmax_{m1} ... logsoftmax_{mn}
     """
     all_preds = list()
     for lineno, line in enumerate(open(filepath, 'r')):
@@ -124,12 +130,12 @@ def load_predictions(filepath: str) -> np.ndarray:
     return np.asarray(all_preds)
 
 
-def store_labels(y_val: torch.LongTensor,
-                      destination: str) -> None:
+def store_labels(eval_gen,
+                 destination: str) -> None:
     """Store the ground truth labels for the validation set.
 
     # Arguments
-        y_val: Labels tensor with shape `[n_samples]`.
+        eval_gen:
         destination: Path of the text file with the computed
             predictions.
 
@@ -140,6 +146,7 @@ def store_labels(y_val: torch.LongTensor,
         ...
         y_n
     """
+    y_val = torch.cat([batch[1] for batch in eval_gen])
     with open(destination, 'w') as dfile:
         dfile.write(f'{y_val.numel()}\n')
         for label in y_val:
@@ -155,6 +162,7 @@ def load_labels(filepath: str) -> np.ndarray:
     return np.asarray(labels, dtype=np.int32)
 
 
-def accuracy(y_pred: np.ndarray, y: np.ndarray) -> float:
+def accuracy(y_pred: np.ndarray,
+             y: np.ndarray) -> float:
     """Computes y_pred accuracy."""
     return (y_pred.argmax(-1) == y).sum() / y.size
