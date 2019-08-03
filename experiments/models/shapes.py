@@ -9,6 +9,6 @@ def maxpool_2d_output(h_in, kernel_sz, stride=None, padding=0, dilation=1):
     return int((h_in + 2 * padding - dilation * (kernel_sz - 1) - 1) / stride + 1)
 
 
-def block_2d_output(h_ind, kernel_sz, maxpool_kernel_sz):
+def block_2d_output(h_ind: int, kernel_sz: int, maxpool_kernel_sz: int) -> int:
     conv_out = conv_2d_output(h_ind, kernel_sz)
     return maxpool_2d_output(conv_out, maxpool_kernel_sz)

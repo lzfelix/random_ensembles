@@ -1,7 +1,8 @@
+from typing import List
 import torch.nn as nn
 import torch.nn.functional as F
 
-from . import shapes
+from models import shapes
 
 
 class ConvNet(nn.Module):
@@ -9,19 +10,24 @@ class ConvNet(nn.Module):
                  img_sz=28,
                  n_classes=10,
                  filters_1=10,
-                 kernels_1=5,
+                 kernel_1=5,
                  filters_2=20,
-                 kernels_2=5,
+                 kernel_2=5,
                  fc_size=50):
-        """Simple ConvNet formed by two convolutional blocks (ie: conv followed by max-pooling)"""
+        """ConvNet formed by two conv blocks (conv + by max-pooling)"""
         super().__init__()
-        self.conv1 = nn.Conv2d(1, filters_1, kernel_size=kernels_1)
-        self.conv2 = nn.Conv2d(filters_1, filters_2, kernel_size=kernels_2)
+
+        self.conv1 = nn.Conv2d(1, filters_1, kernel_size=kernel_1)
+        self.conv2 = nn.Conv2d(filters_1, filters_2, kernel_size=kernel_2)
         self.conv2_drop = nn.Dropout2d()
 
         # Computing the square image flattened descriptor shape
-        block_1_sz = shapes.block_2d_output(img_sz, kernels_1, 2)
-        block_2_sz = shapes.block_2d_output(block_1_sz, kernels_2, 2)
+        # Sanity check for filter size, since this may be random
+        block_1_sz = shapes.block_2d_output(img_sz, kernel_1, 2)
+        if block_1_sz <= kernel_2:
+            kernel_2 = block_1_sz
+
+        block_2_sz = shapes.block_2d_output(block_1_sz, kernel_2, 2)
         self.flat_shape = block_2_sz ** 2 * filters_2
 
         self.fc1 = nn.Linear(self.flat_shape, fc_size)
@@ -38,3 +44,12 @@ class ConvNet(nn.Module):
     @staticmethod
     def metric(y_pred, y_true):
         return dict(accuracy=(y_pred.argmax(-1) == y_true).sum().item())
+
+    @staticmethod
+    def learnable_hyperparams() -> List[str]:
+        return [
+            'filters_1',
+            'kernel_1',
+            'filters_2',
+            'kernel_2'
+        ]

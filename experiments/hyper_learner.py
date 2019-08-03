@@ -65,6 +65,8 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
 
         model_hyperparams = {hname: _ceil(hvalue) for hname, hvalue in zip(hyperparams, hyperparam_values)}
         model = model_class(image_sz, n_classes, **model_hyperparams)
+        print(model)
+
         model = model.to(device)
         loss_fn = F.nll_loss
 
@@ -95,7 +97,7 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
 if __name__ == '__main__':
     # TODO: Add more datasetes
     # TODO: Add support for more metaheuristics
-    # TODO: Add support for hyperparameters selection
+    # TODO: Add support for metaheuristics hyperparams selection
 
     exec_params = get_exec_params()
     print(exec_params)
@@ -120,11 +122,11 @@ if __name__ == '__main__':
                                n_epochs=3,
                                image_sz=28,
                                n_classes=10,
-                               hyperparams=['filters_1'])
+                               hyperparams=ConvNet.learnable_hyperparams())
 
-    # filter_1, lr, momentum
-    lower_bound = [1, 1e-3, 0]
-    upper_bound = [20, 1e-2, 1]
+    # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
+    lower_bound = [1, 2, 1, 2, 1e-3, 0]
+    upper_bound = [20, 9, 20, 9, 1e-2, 1]
 
     n_variables = len(lower_bound)
     mh_hyperparams = dict(alpha=0.5, beta=0.2, gamma=1.0)
