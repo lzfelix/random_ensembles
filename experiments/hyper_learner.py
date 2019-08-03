@@ -53,9 +53,6 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         A closure that should be called with an array of model hyperparams. This second function returns
             `1 - (model_accuracy @ val_set)`.
     """
-    def _ceil(x):
-        return int(np.round(x))
-
     def target_fn(hyperparam_values):
         global callno
         global scoreboard
@@ -63,14 +60,14 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         # Ensuring that hyperparams is a 1D-tensor
         hyperparam_values = np.asarray(hyperparam_values).ravel()
 
-        model_hyperparams = {hname: _ceil(hvalue) for hname, hvalue in zip(hyperparams, hyperparam_values)}
+        model_hyperparams = {hname: round(hvalue) for hname, hvalue in zip(hyperparams, hyperparam_values)}
         model = model_class(image_sz, n_classes, **model_hyperparams)
         print(model)
 
         model = model.to(device)
         loss_fn = F.nll_loss
 
-        # The last hyperparam is the learning rate. We could use momentum, whatever as well
+        # The last two hyperparams are LR and momentum
         nn_optimizer = torch_opt.SGD(model.parameters(), lr=hyperparam_values[-1], momentum=hyperparam_values[-2])
 
         filename = '{}_{}'.format(model_prefix, callno)
@@ -98,6 +95,7 @@ if __name__ == '__main__':
     # TODO: Add more datasetes
     # TODO: Add support for more metaheuristics
     # TODO: Add support for metaheuristics hyperparams selection
+    # TODO: Show model learning rate / momentum
 
     exec_params = get_exec_params()
     print(exec_params)
@@ -119,7 +117,7 @@ if __name__ == '__main__':
                                ConvNet,
                                train_loader,
                                val_loader,
-                               n_epochs=3,
+                               n_epochs=exec_params.n_epochs,
                                image_sz=28,
                                n_classes=10,
                                hyperparams=ConvNet.learnable_hyperparams())
