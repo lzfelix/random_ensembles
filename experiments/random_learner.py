@@ -10,8 +10,8 @@ from torch.nn import functional as F
 from flare.callbacks import Checkpoint
 from flare import trainer
 
-from models import utils
-from models import datasets
+from misc import utils
+from datasets import datasets
 from models.mnist import ConvNet
 
 IMAGE_SZ = 28
@@ -35,7 +35,6 @@ def _sample_value(lower: float, upper: float) -> float:
 
 if __name__ == '__main__':
     # TODO: Show model learning rate / momentum
-    # TODO: Keep track of time
 
     exec_params = get_exec_params()
     print(exec_params)
@@ -67,7 +66,7 @@ if __name__ == '__main__':
         print(f'------------------------- Model {model_no + 1} / {exec_params.n_models} -------------------------')
 
         h_values = [_sample_value(lower_bound[i], upper_bound[i]) for i in range(n_hyperparams)]
-        model_hyperparams = {name: round(value) for name, value in zip(h_names, h_values)}
+        model_hyperparams = {name: int(round(value)) for name, value in zip(h_names, h_values)}
 
         model = ConvNet(IMAGE_SZ, N_CLASSES, **model_hyperparams)
         print(model_hyperparams)

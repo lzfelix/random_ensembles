@@ -11,9 +11,8 @@ from flare.callbacks import Checkpoint
 from opytimizer.optimizers.fa import FA
 
 from models.mnist import ConvNet
-from models import datasets
-from models import utils
-
+from datasets import datasets
+from misc import utils
 
 callno = 0
 scoreboard = dict()
@@ -60,7 +59,7 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         # Ensuring that hyperparams is a 1D-tensor
         hyperparam_values = np.asarray(hyperparam_values).ravel()
 
-        model_hyperparams = {hname: round(hvalue) for hname, hvalue in zip(hyperparams, hyperparam_values)}
+        model_hyperparams = {hname: int(round(hvalue)) for hname, hvalue in zip(hyperparams, hyperparam_values)}
         model = model_class(image_sz, n_classes, **model_hyperparams)
         print(model)
 

@@ -2,7 +2,7 @@ import argparse
 from typing import List
 
 import numpy as np
-from models import utils
+from misc import utils
 from models import ensemble
 
 from opytimizer.optimizers.pso import PSO
