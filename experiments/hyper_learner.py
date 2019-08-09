@@ -11,7 +11,8 @@ from flare.callbacks import Checkpoint
 from opytimizer.optimizers.fa import FA
 
 from models.mnist import ConvNet
-from datasets import datasets
+from datasets import datasets as ds
+from datasets import specs
 from misc import utils
 
 callno = 0
@@ -32,7 +33,7 @@ def get_exec_params() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs, image_sz, n_classes, hyperparams):
+def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs, image_sz, n_channels, n_classes, hyperparams):
     """Creates a target function to be optimized based on some neural net, data and learnable hyperparams
 
     # Arguments
@@ -60,7 +61,7 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         hyperparam_values = np.asarray(hyperparam_values).ravel()
 
         model_hyperparams = {hname: int(round(hvalue)) for hname, hvalue in zip(hyperparams, hyperparam_values)}
-        model = model_class(image_sz, n_classes, **model_hyperparams)
+        model = model_class(image_sz, n_channels, n_classes, **model_hyperparams)
         print(model)
 
         model = model.to(device)
@@ -95,6 +96,7 @@ if __name__ == '__main__':
     # TODO: Add support for more metaheuristics
     # TODO: Add support for metaheuristics hyperparams selection
     # TODO: Show model learning rate / momentum
+    # TODO: check log-maths
 
     exec_params = get_exec_params()
     print(exec_params)
@@ -102,14 +104,16 @@ if __name__ == '__main__':
     device = torch.device('cpu')
     pin_memory = False
     if torch.cuda.is_available() and not exec_params.no_gpu:
-        print('Running model on GPU')
         device = torch.device('cuda')
         pin_memory = True
         torch.backends.cudnn.benchmark = True
 
-    train_loader, val_loader, tst_loader = datasets.mnist_laoders(exec_params.batch_sz,
-                                                                  trn_split_sz=exec_params.trn_split,
-                                                                  pin_memory=pin_memory)
+    ds_specs = specs.get_specs(exec_params.ds_name)
+    print(ds_specs)
+
+    train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
+                                                               trn_split_sz=exec_params.trn_split,
+                                                               pin_memory=pin_memory)
 
     target_fn = make_target_fn(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}',
                                device,
@@ -117,8 +121,9 @@ if __name__ == '__main__':
                                train_loader,
                                val_loader,
                                n_epochs=exec_params.n_epochs,
-                               image_sz=28,
-                               n_classes=10,
+                               image_sz=ds_specs.img_size,
+                               n_channels=ds_specs.n_channels,
+                               n_classes=ds_specs.n_classes,
                                hyperparams=ConvNet.learnable_hyperparams())
 
     # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
@@ -143,6 +148,9 @@ if __name__ == '__main__':
     for ti, tf in zip(top_indices, top_fitness):
         print(f'{ti:<5} {tf:5}')
 
+    print('Predicting on validation and test sets for ensemble learning')
+    print('THERE IS STILL WORK PENDING. DO NOT KILL THIS PROCESS')
+
     # Predicting on validation
     best_models = utils.load_models(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}', top_indices)
     for idx, model in zip(top_indices, best_models):
@@ -157,3 +165,5 @@ if __name__ == '__main__':
     # Persisting labels for ensemble training / testing
     utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels.txt')
     utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels_tst.txt')
+
+    print('Done.')

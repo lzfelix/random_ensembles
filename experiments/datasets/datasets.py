@@ -10,20 +10,40 @@ def mnist_laoders(batch_sz: int,
                   trn_split_sz: float = 0.8,
                   seed: int = 1337,
                   pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    """Creates reproducible train, valid, test splits from the MNIST dataset.
+
+    return _load_dataset(datasets.MNIST, (0.1307,), (0.3081,), batch_sz, trn_split_sz, seed, pin_memory)
+
+
+def cifar10_laoders(batch_sz: int,
+                    trn_split_sz: float = 0.8,
+                    seed: int = 1337,
+                    pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
+
+    return _load_dataset(datasets.CIFAR10, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), batch_sz, trn_split_sz, seed, pin_memory)
+
+
+def _load_dataset(dataset_fn,
+                  means: Tuple,
+                  stds: Tuple,
+                  batch_sz: int,
+                  trn_split_sz: float = 0.8,
+                  seed: int = 1337,
+                  pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    """Creates reproducible train, valid, test splits from a given torchvision dataset.
 
     # Return
         trn_loader: The train loader, granted that samples are shuffled.
         val_loader: Tre validation loader, granted that samples are shuffled.
         tst_loader: The test loader, samples are *not* shuffled.
     """
+
     transfs = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))]
-    )
+        transforms.Normalize(means, stds)
+    ])
 
-    all_train = datasets.MNIST('../data/', train=True, transform=transfs, download=True)
-    all_test = datasets.MNIST('../data/', train=False, transform=transfs, download=True)
+    all_train = dataset_fn('../data/', train=True, transform=transfs, download=True)
+    all_test = dataset_fn('../data/', train=False, transform=transfs, download=True)
 
     n_trn_samples = len(all_train)
     trn_sz = int(trn_split_sz * n_trn_samples)
@@ -40,10 +60,3 @@ def mnist_laoders(batch_sz: int,
     tst_dl = DataLoader(all_test, batch_size=batch_sz, pin_memory=pin_memory, shuffle=False)
 
     return trn_dl, val_dl, tst_dl
-
-
-def cifar10_laoders(batch_sz: int,
-                    trn_split_sz: float = 0.8,
-                    seed: int = 1337,
-                    pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    raise NotImplementedError()

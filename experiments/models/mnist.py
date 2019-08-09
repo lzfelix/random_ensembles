@@ -8,6 +8,7 @@ from models import shapes
 class ConvNet(nn.Module):
     def __init__(self,
                  img_sz=28,
+                 n_channels=1,
                  n_classes=10,
                  filters_1=10,
                  kernel_1=5,
@@ -17,7 +18,7 @@ class ConvNet(nn.Module):
         """ConvNet formed by two conv blocks (conv + by max-pooling)"""
         super().__init__()
 
-        self.conv1 = nn.Conv2d(1, filters_1, kernel_size=kernel_1)
+        self.conv1 = nn.Conv2d(n_channels, filters_1, kernel_size=kernel_1)
         self.conv2 = nn.Conv2d(filters_1, filters_2, kernel_size=kernel_2)
         self.conv2_drop = nn.Dropout2d()
 
