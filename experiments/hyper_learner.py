@@ -92,7 +92,6 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
 
 
 if __name__ == '__main__':
-    # TODO: Add more datasetes
     # TODO: Add support for more metaheuristics
     # TODO: Add support for metaheuristics hyperparams selection
     # TODO: Show model learning rate / momentum

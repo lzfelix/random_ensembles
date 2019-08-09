@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision import transforms
 
+from datasets import mpeg7
+
 
 def mnist_laoders(batch_sz: int,
                   trn_split_sz: float = 0.8,
@@ -60,3 +62,10 @@ def _load_dataset(dataset_fn,
     tst_dl = DataLoader(all_test, batch_size=batch_sz, pin_memory=pin_memory, shuffle=False)
 
     return trn_dl, val_dl, tst_dl
+
+
+def mpeg7_loaders(batch_sz: int,
+                  trn_split_sz: float = 0.8,
+                  seed: int = 1337,
+                  pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    return _load_dataset(mpeg7.MPEG7, (0.5,), (0.5,), batch_sz, trn_split_sz, seed, pin_memory)
