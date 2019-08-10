@@ -8,7 +8,7 @@ from torchvision import transforms
 from datasets import mpeg7
 
 
-def mnist_laoders(batch_sz: int,
+def mnist_loaders(batch_sz: int,
                   trn_split_sz: float = 0.8,
                   seed: int = 1337,
                   pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
@@ -16,7 +16,7 @@ def mnist_laoders(batch_sz: int,
     return _load_dataset(datasets.MNIST, (0.1307,), (0.3081,), batch_sz, trn_split_sz, seed, pin_memory)
 
 
-def cifar10_laoders(batch_sz: int,
+def cifar10_loaders(batch_sz: int,
                     trn_split_sz: float = 0.8,
                     seed: int = 1337,
                     pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:

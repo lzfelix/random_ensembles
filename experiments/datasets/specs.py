@@ -12,8 +12,8 @@ class DatasetSpecs:
         return str(self.__dict__)
 
 _specs = dict(
-    mnist=DatasetSpecs(n_channels=1, img_size=28, n_classes=10, loading_fn=datasets.mnist_laoders),
-    cifar10=DatasetSpecs(n_channels=3, img_size=32, n_classes=10, loading_fn=datasets.cifar10_laoders),
+    mnist=DatasetSpecs(n_channels=1, img_size=28, n_classes=10, loading_fn=datasets.mnist_loaders),
+    cifar10=DatasetSpecs(n_channels=3, img_size=32, n_classes=10, loading_fn=datasets.cifar10_loaders),
     mpeg7=DatasetSpecs(n_channels=1, img_size=32, n_classes=70, loading_fn=datasets.mpeg7_loaders)
 )
 

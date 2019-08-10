@@ -1,1 +1,1 @@
-from datasets.datasets import mnist_laoders
+from datasets.datasets import mnist_loaders

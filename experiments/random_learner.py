@@ -47,7 +47,7 @@ if __name__ == '__main__':
         pin_memory = True
         torch.backends.cudnn.benchmark = True
 
-    trn_loader, val_loader, tst_loader = datasets.mnist_laoders(exec_params.batch_sz,
+    trn_loader, val_loader, tst_loader = datasets.mnist_loaders(exec_params.batch_sz,
                                                                 trn_split_sz=exec_params.trn_split,
                                                                 pin_memory=pin_memory)
 

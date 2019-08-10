@@ -6,7 +6,7 @@ from torchvision import datasets
 from torchvision import transforms
 
 
-def mnist_laoders(batch_sz: int,
+def mnist_loaders(batch_sz: int,
                   trn_split_sz: float = 0.8,
                   seed: int = 1337,
                   pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:

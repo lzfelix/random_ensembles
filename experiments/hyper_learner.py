@@ -11,6 +11,8 @@ from flare.callbacks import Checkpoint
 from opytimizer.optimizers.fa import FA
 
 from models.mnist import ConvNet
+from models.cifar10 import CifarNet
+from models.mpeg7 import MpegNet
 from datasets import datasets as ds
 from datasets import specs
 from misc import utils
@@ -111,13 +113,19 @@ if __name__ == '__main__':
     ds_specs = specs.get_specs(exec_params.ds_name)
     print(ds_specs)
 
+    network_switch = {
+        'mnist': ConvNet,
+        'cifar10': CifarNet,
+        'mpeg7': MpegNet
+    }
+
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
                                                                trn_split_sz=exec_params.trn_split,
                                                                pin_memory=pin_memory)
 
     target_fn = make_target_fn(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}',
                                device,
-                               ConvNet,
+                               network_switch[exec_params.ds_name],
                                train_loader,
                                val_loader,
                                n_epochs=exec_params.n_epochs,
@@ -126,7 +134,15 @@ if __name__ == '__main__':
                                n_classes=ds_specs.n_classes,
                                hyperparams=ConvNet.learnable_hyperparams())
 
-    # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
+    # MNIST: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
+    #lower_bound = [1, 2, 1, 2, 1e-3, 0]
+    #upper_bound = [20, 9, 20, 9, 1e-2, 1]
+
+    # CIFAR-10: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
+    #lower_bound = [1, 2, 1, 2, 1e-3, 0]
+    #upper_bound = [64, 9, 64, 9, 1e-2, 1]
+
+    # MPEG-7: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
     lower_bound = [1, 2, 1, 2, 1e-3, 0]
     upper_bound = [20, 9, 20, 9, 1e-2, 1]
 
