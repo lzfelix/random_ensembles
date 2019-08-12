@@ -14,7 +14,6 @@ def get_exec_args() -> argparse.Namespace:
     parser.add_argument('tst_ground', help='Path to the test ground truth labels', type=str)
     parser.add_argument('-val_preds', help='List of candidate predictions in the validation set', type=str, nargs='+',
                         required=True)
-    parser.add_argument('-n_agents', help='MH amount of agents', type=int, default=20)
     parser.add_argument('-n_iters', help='MH amount of iterations', type=int, default=10)
 
     return parser.parse_args()
@@ -48,8 +47,9 @@ if __name__ == '__main__':
     val_all_preds, val_y_true = ensemble.load_candidates_preds(exec_args.val_preds, exec_args.val_ground)
     tst_all_preds, tst_y_true = ensemble.load_candidates_preds(tst_preds, exec_args.tst_ground)
 
+    n_agents = val_all_preds.shape[0]
     if val_all_preds.shape[0] != tst_all_preds.shape[0]:
-        raise RuntimeError('Amount of predictions for validation and test sets differ')
+        raise RuntimeError('Amount of candidates for validation and test sets differ')
 
     ensemble_fun = ensemble.make_combination(val_all_preds, val_y_true)
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     history = utils.optimize(PSO,
                              target=ensemble_fun,
-                             n_agents=exec_args.n_agents,
+                             n_agents=n_agents,
                              n_variables=n_variables,
                              n_iterations=exec_args.n_iters,
                              lb=lb,

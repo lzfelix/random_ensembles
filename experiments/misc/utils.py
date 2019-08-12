@@ -95,6 +95,7 @@ def predict_persist(model,
     y_val = [batch[1] for batch in eval_gen]
     y_val = torch.cat(y_val).to(device)
 
+    # max(p(x)) == max(log(p(x)))
     acc = ((logits.argmax(-1) == y_val).sum().float() / y_val.numel()).item()
 
     def tensor2str(tensor):

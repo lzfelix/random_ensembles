@@ -4,4 +4,5 @@ torch==1.1.0
 torchvision==0.4.0
 matplotlib==3.1.1
 opytimizer
+
 git+https://github.com/lzfelix/flare

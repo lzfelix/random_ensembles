@@ -69,5 +69,9 @@ def mpeg7_loaders(batch_sz: int,
                   seed: int = 1337,
                   pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
 
-    # TODO: Need to figure out mean and std values!
-    return _load_dataset(mpeg7.MPEG7, (0.5,), (0.5,), batch_sz, trn_split_sz, seed, pin_memory)
+    # How to compute mean and std values:
+    #     from datasets import mpeg7
+    #     train_set = mpeg7.MPEG7('../data/')
+    #     mean = train_set.x.astype(float).mean() / 255
+    #     std = train_set.x.astype(float).std() / 255
+    return _load_dataset(mpeg7.MPEG7, (0.1596,), (0.3469,), batch_sz, trn_split_sz, seed, pin_memory)

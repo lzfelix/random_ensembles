@@ -1,21 +1,22 @@
 import argparse
+from typing import List, NamedTuple
 
 import numpy as np
 import torch
 from torch.nn import functional as F
 from torch import optim as torch_opt
+from torch.utils.data import DataLoader
 
+from torch import nn
 from flare import trainer
 from flare.callbacks import Checkpoint
 
 from opytimizer.optimizers.fa import FA
 
-from models.mnist import ConvNet
-from models.cifar10 import CifarNet
-from models.mpeg7 import MpegNet
-from datasets import datasets as ds
-from datasets import specs
 from misc import utils
+from misc import logs
+from models import model_specs
+from datasets import specs
 
 callno = 0
 scoreboard = dict()
@@ -35,7 +36,16 @@ def get_exec_params() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs, image_sz, n_channels, n_classes, hyperparams):
+def make_target_fn(model_prefix: str,
+                   device: torch.device,
+                   model_class: nn.Module,
+                   trn_gen: DataLoader,
+                   val_gen: DataLoader,
+                   n_epochs: int,
+                   image_sz: int,
+                   n_channels: int,
+                   n_classes: int,
+                   hyperparams_names: List[str]):
     """Creates a target function to be optimized based on some neural net, data and learnable hyperparams
 
     # Arguments
@@ -55,14 +65,16 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         A closure that should be called with an array of model hyperparams. This second function returns
             `1 - (model_accuracy @ val_set)`.
     """
+
     def target_fn(hyperparam_values):
         global callno
         global scoreboard
 
         # Ensuring that hyperparams is a 1D-tensor
         hyperparam_values = np.asarray(hyperparam_values).ravel()
+        logs.print_hyperparams(hyperparams_names, hyperparam_values)
 
-        model_hyperparams = {hname: int(round(hvalue)) for hname, hvalue in zip(hyperparams, hyperparam_values)}
+        model_hyperparams = {hname: int(round(hvalue)) for hname, hvalue in zip(hyperparams_names, hyperparam_values)}
         model = model_class(image_sz, n_channels, n_classes, **model_hyperparams)
         print(model)
 
@@ -76,9 +88,8 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         cbs = [Checkpoint('val_accuracy', min_delta=1e-3, filename=filename, save_best=True, increasing=True)]
 
         # Training
-        history = trainer.train_on_loader(model, trn_gen, val_gen, loss_fn, nn_optimizer,
-                                          n_epochs=n_epochs, batch_first=True, device=device,
-                                          callbacks=cbs)
+        trainer.train_on_loader(model, trn_gen, val_gen, loss_fn, nn_optimizer,
+                                n_epochs=n_epochs, batch_first=True, device=device, callbacks=cbs)
 
         # Getting the best model during training to evaluate
         best_model = torch.load(filename + '.pth').to(device)
@@ -94,12 +105,6 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
 
 
 if __name__ == '__main__':
-    # TODO: Figure out mean and std values for MPEG7
-    # TODO: Add support for more metaheuristics
-    # TODO: Add support for metaheuristics hyperparams selection
-    # TODO: Show model learning rate / momentum
-    # TODO: check log-maths
-
     exec_params = get_exec_params()
     print(exec_params)
 
@@ -113,40 +118,23 @@ if __name__ == '__main__':
     ds_specs = specs.get_specs(exec_params.ds_name)
     print(ds_specs)
 
-    network_switch = {
-        'mnist': ConvNet,
-        'cifar10': CifarNet,
-        'mpeg7': MpegNet
-    }
-
+    experiment = model_specs.experiment_configs[exec_params.ds_name]
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
                                                                trn_split_sz=exec_params.trn_split,
                                                                pin_memory=pin_memory)
 
     target_fn = make_target_fn(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}',
                                device,
-                               network_switch[exec_params.ds_name],
+                               experiment.net,
                                train_loader,
                                val_loader,
                                n_epochs=exec_params.n_epochs,
                                image_sz=ds_specs.img_size,
                                n_channels=ds_specs.n_channels,
                                n_classes=ds_specs.n_classes,
-                               hyperparams=ConvNet.learnable_hyperparams())
+                               hyperparams_names=experiment.net.learnable_hyperparams())
 
-    # MNIST: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    #lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    #upper_bound = [20, 9, 20, 9, 1e-2, 1]
-
-    # CIFAR-10: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    #lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    #upper_bound = [64, 9, 64, 9, 1e-2, 1]
-
-    # MPEG-7: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    upper_bound = [20, 9, 20, 9, 1e-2, 1]
-
-    n_variables = len(lower_bound)
+    n_variables = len(experiment.lb)
     mh_hyperparams = dict(alpha=0.5, beta=0.2, gamma=1.0)
 
     # Learning the model
@@ -155,8 +143,8 @@ if __name__ == '__main__':
                              n_agents=exec_params.n_agents,
                              n_variables=n_variables,
                              n_iterations=exec_params.n_iters,
-                             lb=lower_bound,
-                             ub=upper_bound,
+                             lb=experiment.lb,
+                             ub=experiment.ub,
                              hyperparams=mh_hyperparams)
 
     # Keeping the top_k models. More than one model can be selected from each metaheuristic iteration
