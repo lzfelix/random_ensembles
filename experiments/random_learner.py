@@ -12,9 +12,7 @@ from flare import trainer
 
 from misc import utils
 from misc import logs
-from models import ConvNet
-from models import CifarNet
-from models import MpegNet
+from models import model_specs
 from datasets import specs
 
 IMAGE_SZ = 28
@@ -53,20 +51,11 @@ if __name__ == '__main__':
                                                                trn_split_sz=exec_params.trn_split,
                                                                pin_memory=pin_memory)
 
-    network_switch = {
-        'mnist': ConvNet,
-        'cifar10': CifarNet,
-        'mpeg7': MpegNet
-    }
-    network = network_switch[exec_params.ds_name]
+    experiment = model_specs.experiment_configs[exec_params.ds_name]
+    n_hyperparams = len(experiment.lb)
+    assert len(experiment.lb) == len(experiment.ub)
 
-    # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    upper_bound = [20, 9, 20, 9, 1e-2, 1]
-    n_hyperparams = len(lower_bound)
-    assert len(lower_bound) == len(upper_bound)
-
-    h_names = network.learnable_hyperparams()
+    h_names = experiment.net.learnable_hyperparams()
     model_prefix = f'./trained/{exec_params.ds_name}_random'
 
     accuracies = list()
@@ -74,12 +63,12 @@ if __name__ == '__main__':
     for model_no in range(exec_params.n_models):
         print(f'------------------------- Model {model_no + 1} / {exec_params.n_models} -------------------------')
 
-        h_values = [_sample_value(lower_bound[i], upper_bound[i]) for i in range(n_hyperparams)]
+        h_values = [_sample_value(experiment.lb[i], experiment.ub[i]) for i in range(n_hyperparams)]
         logs.print_hyperparams(h_names, h_values)
 
         model_hyperparams = {name: int(round(value)) for name, value in zip(h_names, h_values)}
 
-        model = network(ds_specs.img_size, ds_specs.n_channels, ds_specs.n_classes, **model_hyperparams)
+        model = experiment.net(ds_specs.img_size, ds_specs.n_channels, ds_specs.n_classes, **model_hyperparams)
         print(model_hyperparams)
         print(model)
 

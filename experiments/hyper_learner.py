@@ -1,5 +1,5 @@
 import argparse
-from typing import List, Callable
+from typing import List, NamedTuple
 
 import numpy as np
 import torch
@@ -7,6 +7,7 @@ from torch.nn import functional as F
 from torch import optim as torch_opt
 from torch.utils.data import DataLoader
 
+from torch import nn
 from flare import trainer
 from flare.callbacks import Checkpoint
 
@@ -14,9 +15,7 @@ from opytimizer.optimizers.fa import FA
 
 from misc import utils
 from misc import logs
-from models import ConvNet
-from models import CifarNet
-from models import MpegNet
+from models import model_specs
 from datasets import specs
 
 callno = 0
@@ -39,7 +38,7 @@ def get_exec_params() -> argparse.Namespace:
 
 def make_target_fn(model_prefix: str,
                    device: torch.device,
-                   model_class: Callable,
+                   model_class: nn.Module,
                    trn_gen: DataLoader,
                    val_gen: DataLoader,
                    n_epochs: int,
@@ -106,9 +105,6 @@ def make_target_fn(model_prefix: str,
 
 
 if __name__ == '__main__':
-    # TODO: Add support for more metaheuristics
-    # TODO: Add support for metaheuristics hyperparams selection
-
     exec_params = get_exec_params()
     print(exec_params)
 
@@ -122,41 +118,23 @@ if __name__ == '__main__':
     ds_specs = specs.get_specs(exec_params.ds_name)
     print(ds_specs)
 
-    network_switch = {
-        'mnist': ConvNet,
-        'cifar10': CifarNet,
-        'mpeg7': MpegNet
-    }
-    network = network_switch[exec_params.ds_name]
-
+    experiment = model_specs.experiment_configs[exec_params.ds_name]
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
                                                                trn_split_sz=exec_params.trn_split,
                                                                pin_memory=pin_memory)
 
     target_fn = make_target_fn(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}',
                                device,
-                               network,
+                               experiment.net,
                                train_loader,
                                val_loader,
                                n_epochs=exec_params.n_epochs,
                                image_sz=ds_specs.img_size,
                                n_channels=ds_specs.n_channels,
                                n_classes=ds_specs.n_classes,
-                               hyperparams_names=network.learnable_hyperparams())
+                               hyperparams_names=experiment.net.learnable_hyperparams())
 
-    # MNIST: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    #lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    #upper_bound = [20, 9, 20, 9, 1e-2, 1]
-
-    # CIFAR-10: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    #lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    #upper_bound = [64, 9, 64, 9, 1e-2, 1]
-
-    # MPEG-7: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
-    lower_bound = [1, 2, 1, 2, 1e-3, 0]
-    upper_bound = [20, 9, 20, 9, 1e-2, 1]
-
-    n_variables = len(lower_bound)
+    n_variables = len(experiment.lb)
     mh_hyperparams = dict(alpha=0.5, beta=0.2, gamma=1.0)
 
     # Learning the model
@@ -165,8 +143,8 @@ if __name__ == '__main__':
                              n_agents=exec_params.n_agents,
                              n_variables=n_variables,
                              n_iterations=exec_params.n_iters,
-                             lb=lower_bound,
-                             ub=upper_bound,
+                             lb=experiment.lb,
+                             ub=experiment.ub,
                              hyperparams=mh_hyperparams)
 
     # Keeping the top_k models. More than one model can be selected from each metaheuristic iteration
