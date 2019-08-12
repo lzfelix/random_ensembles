@@ -11,8 +11,11 @@ from flare.callbacks import Checkpoint
 from flare import trainer
 
 from misc import utils
-from datasets import datasets
-from models.mnist import ConvNet
+from misc import logs
+from models import ConvNet
+from models import CifarNet
+from models import MpegNet
+from datasets import specs
 
 IMAGE_SZ = 28
 N_CLASSES = 10
@@ -34,8 +37,6 @@ def _sample_value(lower: float, upper: float) -> float:
 
 
 if __name__ == '__main__':
-    # TODO: Show model learning rate / momentum
-
     exec_params = get_exec_params()
     print(exec_params)
 
@@ -47,9 +48,17 @@ if __name__ == '__main__':
         pin_memory = True
         torch.backends.cudnn.benchmark = True
 
-    trn_loader, val_loader, tst_loader = datasets.mnist_loaders(exec_params.batch_sz,
-                                                                trn_split_sz=exec_params.trn_split,
-                                                                pin_memory=pin_memory)
+    ds_specs = specs.get_specs(exec_params.ds_name)
+    train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
+                                                               trn_split_sz=exec_params.trn_split,
+                                                               pin_memory=pin_memory)
+
+    network_switch = {
+        'mnist': ConvNet,
+        'cifar10': CifarNet,
+        'mpeg7': MpegNet
+    }
+    network = network_switch[exec_params.ds_name]
 
     # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
     lower_bound = [1, 2, 1, 2, 1e-3, 0]
@@ -57,7 +66,7 @@ if __name__ == '__main__':
     n_hyperparams = len(lower_bound)
     assert len(lower_bound) == len(upper_bound)
 
-    h_names = ConvNet.learnable_hyperparams()
+    h_names = network.learnable_hyperparams()
     model_prefix = f'./trained/{exec_params.ds_name}_random'
 
     accuracies = list()
@@ -66,9 +75,11 @@ if __name__ == '__main__':
         print(f'------------------------- Model {model_no + 1} / {exec_params.n_models} -------------------------')
 
         h_values = [_sample_value(lower_bound[i], upper_bound[i]) for i in range(n_hyperparams)]
+        logs.print_hyperparams(h_names, h_values)
+
         model_hyperparams = {name: int(round(value)) for name, value in zip(h_names, h_values)}
 
-        model = ConvNet(IMAGE_SZ, N_CLASSES, **model_hyperparams)
+        model = network(ds_specs.img_size, ds_specs.n_channels, ds_specs.n_classes, **model_hyperparams)
         print(model_hyperparams)
         print(model)
 
@@ -82,7 +93,7 @@ if __name__ == '__main__':
         cbs = [Checkpoint('val_accuracy', min_delta=1e-3, filename=filename, save_best=True, increasing=True)]
 
         # Training and getting the best model for evaluation
-        history = trainer.train_on_loader(model, trn_loader, val_loader, loss_fn, nn_optimizer,
+        history = trainer.train_on_loader(model, train_loader, val_loader, loss_fn, nn_optimizer,
                                           n_epochs=exec_params.n_epochs, batch_first=True, device=device,
                                           callbacks=cbs)
 
