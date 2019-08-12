@@ -12,11 +12,12 @@ from flare.callbacks import Checkpoint
 
 from opytimizer.optimizers.fa import FA
 
-from models.mnist import ConvNet
-from models.cifar10 import CifarNet
-from models.mpeg7 import MpegNet
-from datasets import specs
 from misc import utils
+from misc import logs
+from models import ConvNet
+from models import CifarNet
+from models import MpegNet
+from datasets import specs
 
 callno = 0
 scoreboard = dict()
@@ -45,7 +46,7 @@ def make_target_fn(model_prefix: str,
                    image_sz: int,
                    n_channels: int,
                    n_classes: int,
-                   hyperparams: List[str]):
+                   hyperparams_names: List[str]):
     """Creates a target function to be optimized based on some neural net, data and learnable hyperparams
 
     # Arguments
@@ -65,14 +66,16 @@ def make_target_fn(model_prefix: str,
         A closure that should be called with an array of model hyperparams. This second function returns
             `1 - (model_accuracy @ val_set)`.
     """
+
     def target_fn(hyperparam_values):
         global callno
         global scoreboard
 
         # Ensuring that hyperparams is a 1D-tensor
         hyperparam_values = np.asarray(hyperparam_values).ravel()
+        logs.print_hyperparams(hyperparams_names, hyperparam_values)
 
-        model_hyperparams = {hname: int(round(hvalue)) for hname, hvalue in zip(hyperparams, hyperparam_values)}
+        model_hyperparams = {hname: int(round(hvalue)) for hname, hvalue in zip(hyperparams_names, hyperparam_values)}
         model = model_class(image_sz, n_channels, n_classes, **model_hyperparams)
         print(model)
 
@@ -103,10 +106,9 @@ def make_target_fn(model_prefix: str,
 
 
 if __name__ == '__main__':
-    # TODO: Figure out mean and std values for MPEG7
     # TODO: Add support for more metaheuristics
     # TODO: Add support for metaheuristics hyperparams selection
-    # TODO: Show model learning rate / momentum
+    # TODO: Figure out mean and std values for MPEG7
 
     exec_params = get_exec_params()
     print(exec_params)
@@ -126,6 +128,7 @@ if __name__ == '__main__':
         'cifar10': CifarNet,
         'mpeg7': MpegNet
     }
+    network = network_switch[exec_params.ds_name]
 
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
                                                                trn_split_sz=exec_params.trn_split,
@@ -133,14 +136,14 @@ if __name__ == '__main__':
 
     target_fn = make_target_fn(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}',
                                device,
-                               network_switch[exec_params.ds_name],
+                               network,
                                train_loader,
                                val_loader,
                                n_epochs=exec_params.n_epochs,
                                image_sz=ds_specs.img_size,
                                n_channels=ds_specs.n_channels,
                                n_classes=ds_specs.n_classes,
-                               hyperparams=ConvNet.learnable_hyperparams())
+                               hyperparams_names=network.learnable_hyperparams())
 
     # MNIST: filters_1, kernel_1, filters_2, kernel_2, lr, momentum
     #lower_bound = [1, 2, 1, 2, 1e-3, 0]
