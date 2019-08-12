@@ -108,7 +108,6 @@ def make_target_fn(model_prefix: str,
 if __name__ == '__main__':
     # TODO: Add support for more metaheuristics
     # TODO: Add support for metaheuristics hyperparams selection
-    # TODO: Figure out mean and std values for MPEG7
 
     exec_params = get_exec_params()
     print(exec_params)
