@@ -1,9 +1,11 @@
 import argparse
+from typing import List, Callable
 
 import numpy as np
 import torch
 from torch.nn import functional as F
 from torch import optim as torch_opt
+from torch.utils.data import DataLoader
 
 from flare import trainer
 from flare.callbacks import Checkpoint
@@ -13,7 +15,6 @@ from opytimizer.optimizers.fa import FA
 from models.mnist import ConvNet
 from models.cifar10 import CifarNet
 from models.mpeg7 import MpegNet
-from datasets import datasets as ds
 from datasets import specs
 from misc import utils
 
@@ -35,7 +36,16 @@ def get_exec_params() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs, image_sz, n_channels, n_classes, hyperparams):
+def make_target_fn(model_prefix: str,
+                   device: torch.device,
+                   model_class: Callable,
+                   trn_gen: DataLoader,
+                   val_gen: DataLoader,
+                   n_epochs: int,
+                   image_sz: int,
+                   n_channels: int,
+                   n_classes: int,
+                   hyperparams: List[str]):
     """Creates a target function to be optimized based on some neural net, data and learnable hyperparams
 
     # Arguments
@@ -76,9 +86,8 @@ def make_target_fn(model_prefix, device, model_class, trn_gen, val_gen, n_epochs
         cbs = [Checkpoint('val_accuracy', min_delta=1e-3, filename=filename, save_best=True, increasing=True)]
 
         # Training
-        history = trainer.train_on_loader(model, trn_gen, val_gen, loss_fn, nn_optimizer,
-                                          n_epochs=n_epochs, batch_first=True, device=device,
-                                          callbacks=cbs)
+        trainer.train_on_loader(model, trn_gen, val_gen, loss_fn, nn_optimizer,
+                                n_epochs=n_epochs, batch_first=True, device=device, callbacks=cbs)
 
         # Getting the best model during training to evaluate
         best_model = torch.load(filename + '.pth').to(device)
