@@ -19,7 +19,7 @@ experiment_configs = {
     'cifar10': Experiment(
         net=CifarNet,
         lb=[1, 2, 1, 2, 1e-3, 0],
-        ub=[20, 9, 20, 9, 1e-2, 1]
+        ub=[32, 9, 32, 9, 1e-2, 1]
         # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
     ),
     'mpeg7': Experiment(
