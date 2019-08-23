@@ -15,6 +15,13 @@ def mnist_loaders(batch_sz: int,
 
     return _load_dataset(datasets.MNIST, (0.1307,), (0.3081,), batch_sz, trn_split_sz, seed, pin_memory)
 
+def kmnist_loaders(batch_sz: int,
+                  trn_split_sz: float = 0.8,
+                  seed: int = 1337,
+                  pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
+
+    return _load_dataset(datasets.KMNIST, (0.1307,), (0.3081,), batch_sz, trn_split_sz, seed, pin_memory)
+
 
 def cifar10_loaders(batch_sz: int,
                     trn_split_sz: float = 0.8,
