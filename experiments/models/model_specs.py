@@ -1,6 +1,6 @@
 from typing import NamedTuple, List
 from torch import nn
-from models import ConvNet, MpegNet, CifarNet, KM
+from models import ConvNet, MpegNet, CifarNet, KMnistNet
 
 
 class Experiment(NamedTuple):
