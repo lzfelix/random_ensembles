@@ -1,5 +1,5 @@
 import argparse
-from typing import List, NamedTuple
+from typing import List
 
 import numpy as np
 import torch
@@ -11,12 +11,12 @@ from torch import nn
 from flare import trainer
 from flare.callbacks import Checkpoint
 
-from opytimizer.optimizers.fa import FA
 
 from misc import utils
 from misc import logs
 from models import model_specs
 from datasets import specs
+from mh import specs as mh_specs
 
 callno = 0
 scoreboard = dict()
@@ -135,17 +135,18 @@ if __name__ == '__main__':
                                hyperparams_names=experiment.net.learnable_hyperparams())
 
     n_variables = len(experiment.lb)
-    mh_hyperparams = dict(alpha=0.5, beta=0.2, gamma=1.0)
+    optimization_specs = mh_specs.get_specs(exec_params.mh_name)
+    print(f'MH hyperparams: {optimization_specs}')
 
     # Learning the model
-    history = utils.optimize(FA,
+    history = utils.optimize(optimization_specs.mh_method,
                              target=target_fn,
                              n_agents=exec_params.n_agents,
                              n_variables=n_variables,
                              n_iterations=exec_params.n_iters,
                              lb=experiment.lb,
                              ub=experiment.ub,
-                             hyperparams=mh_hyperparams)
+                             hyperparams=optimization_specs.hyperparams)
 
     # Keeping the top_k models. More than one model can be selected from each metaheuristic iteration
     top_indices, top_fitness = utils.get_top_models(scoreboard, exec_params.top_k)
