@@ -15,13 +15,15 @@ def get_exec_params() -> argparse.Namespace:
     parser.add_argument('-n_epochs', help='For how long to train the model', default=15, type=int)
     parser.add_argument('-batch_sz', help='Batch size', default=128, type=int)
     parser.add_argument('-trn_split', help='Fraction of train data used for training', default=0.8, type=float)
-    parser.add_argument('-lr', help='SGD learning rate', default=1.0, type=float)
+    parser.add_argument('-lr', help='SGD learning rate', default=0.05, type=float)
     parser.add_argument('-momentum', help='SGD momentum', default=0, type=float)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     exec_params = get_exec_params()
+    print(exec_params)
+
     device, pin_memory = utils.get_device(no_gpu=False)
 
     ds_specs = specs.get_specs(exec_params.ds_name)
