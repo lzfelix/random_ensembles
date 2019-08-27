@@ -12,9 +12,9 @@ class Experiment(NamedTuple):
 experiment_configs = {
     'mnist': Experiment(
         net=ConvNet,
-        lb=[1, 2, 1, 2, 1e-3, 0],
-        ub=[20, 9, 20, 9, 1e-2, 1]
-        # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
+        lb=[1, 2, 1, 2, 50, 1e-3, 0],
+        ub=[20, 9, 20, 9, 100, 1e-2, 1]
+        # filters_1, kernel_1, filters_2, kernel_2, fc_size, lr, momentum
     ),
     'kmnist': Experiment(
         # net=KMnistNet,
@@ -22,15 +22,19 @@ experiment_configs = {
         # ub=[20, 9, 20, 9, 200, 0.9, 1e-2, 1]
 
         net=ConvNet,
-        lb=[1, 2, 1, 2, 1e-3, 0],
-        ub=[20, 9, 20, 9, 1e-2, 1]
-        # filters_1, kernel_1, filters_2, kernel_2, fc_size, p_drop, lr, momentum
+        lb=[1, 2, 1, 2, 50, 1e-3, 0],
+        ub=[20, 9, 20, 9, 100, 1e-2, 1]
+        # filters_1, kernel_1, filters_2, kernel_2, fc_size, lr, momentum
     ),
     'cifar10': Experiment(
         net=CifarNet,
-        lb=[1, 2, 1, 2, 1e-3, 0],
-        ub=[32, 9, 32, 9, 1e-2, 1]
+        # lb=[1, 2, 1, 2, 1e-3, 0],
+        # ub=[32, 9, 32, 9, 1e-2, 1]
         # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
+
+        lb = [1, 2, 1, 2, 50, 25, 1e-3, 0],
+        ub = [32, 9, 32, 9, 200, 100, 1e-2, 1]
+        # filters_1, kernel_1, filters_2, kernel_2, fc1, fc2, lr, momentum
     ),
     'mpeg7': Experiment(
         net=MpegNet,

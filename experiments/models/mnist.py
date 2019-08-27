@@ -52,5 +52,6 @@ class ConvNet(nn.Module):
             'filters_1',
             'kernel_1',
             'filters_2',
-            'kernel_2'
+            'kernel_2',
+            'fc_size'
         ]
