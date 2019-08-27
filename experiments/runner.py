@@ -31,6 +31,7 @@ if __name__ == '__main__':
 
     experiment_setup = model_specs.get_experiment_setup(exec_params.ds_name)
     model = experiment_setup.net().to(device)
+    print(model)
 
     if exec_params.ds_name == 'kmnist':
         opt = optim.Adadelta(model.parameters(), lr=exec_params.lr)
