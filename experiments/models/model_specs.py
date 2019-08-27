@@ -17,9 +17,13 @@ experiment_configs = {
         # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
     ),
     'kmnist': Experiment(
-        net=KMnistNet,
-        lb=[1, 2, 1, 2, 50, 0, 1e-3, 0],
-        ub=[20, 9, 20, 9, 200, 0.9, 1e-2, 1]
+        # net=KMnistNet,
+        # lb=[1, 2, 1, 2, 50, 0, 1e-3, 0],
+        # ub=[20, 9, 20, 9, 200, 0.9, 1e-2, 1]
+
+        net=ConvNet,
+        lb=[1, 2, 1, 2, 1e-3, 0],
+        ub=[20, 9, 20, 9, 1e-2, 1]
         # filters_1, kernel_1, filters_2, kernel_2, fc_size, p_drop, lr, momentum
     ),
     'cifar10': Experiment(

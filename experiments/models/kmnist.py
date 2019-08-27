@@ -21,13 +21,17 @@ class KMnistNet(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels, filters_1, kernel_size=kernel_1)
         self.conv2 = nn.Conv2d(filters_1, filters_2, kernel_size=kernel_2)
-        self.dropout = nn.Dropout(p_drop=p_drop)
+        self.dropout = nn.Dropout(p=p_drop)
 
         # Ensuring that the 2nd kernel is not larger than the 1st layer output
         conv1_output = shapes.conv_2d_output(img_sz, kernel_1)
         kernel_2 = min(conv1_output, kernel_2)
 
-        self.flat_shape = shapes.conv_2d_output(conv1_output, kernel_2) ** 2 * filters_2
+        self.flat_shape = shapes.maxpool_2d_output(
+            shapes.conv_2d_output(conv1_output, kernel_2),
+            kernel_sz=2
+        ) ** 2 * filters_2
+
         self.dense1 = nn.Linear(self.flat_shape, fc_size)
         self.dense2 = nn.Linear(fc_size, n_classes)
 
@@ -36,7 +40,7 @@ class KMnistNet(nn.Module):
         x = F.relu(self.conv2(x))
         x = F.max_pool2d(x, 2)
         x = self.dropout(x)
-        x = x.view(-1)
+        x = x.view(x.shape[0], -1)
         x = F.relu(self.dense1(x))
         x = self.dropout(x)
         return F.log_softmax(self.dense2(x), dim=-1)
