@@ -46,6 +46,7 @@ def make_target_fn(model_prefix: str,
                    image_sz: int,
                    n_channels: int,
                    n_classes: int,
+                   use_sgd: bool,
                    hyperparams_names: List[str]):
     """Creates a target function to be optimized based on some neural net, data and learnable hyperparams
 
@@ -83,7 +84,10 @@ def make_target_fn(model_prefix: str,
         loss_fn = F.nll_loss
 
         # The last two hyperparams are LR and momentum
-        nn_optimizer = torch_opt.SGD(model.parameters(), lr=hyperparam_values[-1], momentum=hyperparam_values[-2])
+        if use_sgd:
+            nn_optimizer = torch_opt.SGD(model.parameters(), lr=hyperparam_values[-1], momentum=hyperparam_values[-2])
+        else:
+            nn_optimizer = torch_opt.Adadelta(model.parameters(), lr=hyperparam_values[-1])
 
         filename = '{}_{}'.format(model_prefix, callno)
         cbs = [Checkpoint('val_accuracy', min_delta=1e-3, filename=filename, save_best=True, increasing=True)]
@@ -117,7 +121,9 @@ if __name__ == '__main__':
         torch.backends.cudnn.benchmark = True
 
     ds_specs = specs.get_specs(exec_params.ds_name)
+    use_sgd = exec_params.ds_name.lower() != 'kmnist'
     print(ds_specs)
+    print(f'Using SGD:: {use_sgd}')
 
     experiment = model_specs.experiment_configs[exec_params.ds_name]
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
@@ -133,6 +139,7 @@ if __name__ == '__main__':
                                image_sz=ds_specs.img_size,
                                n_channels=ds_specs.n_channels,
                                n_classes=ds_specs.n_classes,
+                               use_sgd=use_sgd,
                                hyperparams_names=experiment.net.learnable_hyperparams())
 
     n_variables = len(experiment.lb)
@@ -185,6 +192,9 @@ if __name__ == '__main__':
         for ti, tf in zip(top_indices, top_fitness):
             print(f'{ti:<10} {(1 - tf):10.4} {all_val_acc[ti]:10.4} {all_tst_acc[ti]:10.4}')
     else:
+        print(len(all_val_acc))
+        print(len(top_fitness))
+        print(top_indices)
         for ti, tf in zip(top_indices, top_fitness):
             print(f'{ti:<10}{(1 - tf):10.4}{all_val_acc[ti]:10.4} {"?"*10}')
     print('Done.')
