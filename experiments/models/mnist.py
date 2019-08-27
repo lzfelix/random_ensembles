@@ -35,8 +35,8 @@ class ConvNet(nn.Module):
         self.fc2 = nn.Linear(fc_size, n_classes)
 
     def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        x = F.max_pool2d(self.conv2_drop(F.relu(self.conv2(x))), 2)
         x = x.view(-1, self.flat_shape)
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)

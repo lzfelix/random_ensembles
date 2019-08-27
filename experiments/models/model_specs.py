@@ -32,8 +32,8 @@ experiment_configs = {
         # ub=[32, 9, 32, 9, 1e-2, 1]
         # filters_1, kernel_1, filters_2, kernel_2, lr, momentum
 
-        lb = [1, 2, 1, 2, 50, 25, 1e-3, 0],
-        ub = [32, 9, 32, 9, 200, 100, 1e-2, 1]
+        lb=[1, 2, 1, 2, 50, 25, 1e-3, 0],
+        ub=[32, 9, 32, 9, 200, 100, 1e-2, 1]
         # filters_1, kernel_1, filters_2, kernel_2, fc1, fc2, lr, momentum
     ),
     'mpeg7': Experiment(
