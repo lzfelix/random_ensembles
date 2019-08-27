@@ -2,6 +2,7 @@ import argparse
 from typing import List
 
 import numpy as np
+
 import torch
 from torch.nn import functional as F
 from torch import optim as torch_opt
@@ -10,7 +11,6 @@ from torch.utils.data import DataLoader
 from torch import nn
 from flare import trainer
 from flare.callbacks import Checkpoint
-
 
 from misc import utils
 from misc import logs
@@ -33,6 +33,7 @@ def get_exec_params() -> argparse.Namespace:
     parser.add_argument('-top_k', help='Retrieve the top k best neural nets found', type=int, default=10)
     parser.add_argument('-trn_split', help='Fraction of train data used for training', type=float, default=0.8)
     parser.add_argument('--no_gpu', help='Uses CPU instead of GPU', action='store_true')
+    parser.add_argument('--show_test', help='Shows model accuracy @ train test in the end summary', action='store_true')
     return parser.parse_args()
 
 
@@ -157,18 +158,33 @@ if __name__ == '__main__':
     print('THERE IS STILL WORK PENDING. DO NOT KILL THIS PROCESS')
 
     # Predicting on validation
+    all_val_acc = []
     best_models = utils.load_models(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}', top_indices)
     for idx, model in zip(top_indices, best_models):
-        utils.predict_persist(model, val_loader, device,
-                              f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}.txt')
+        val_acc = utils.predict_persist(model, val_loader, device,
+                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}.txt')
+        all_val_acc.append(val_acc)
 
     # Predicting on test
+    all_tst_acc = []
     for idx, model in zip(top_indices, best_models):
-        utils.predict_persist(model, tst_loader, device,
-                              f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}_tst.txt')
+        tst_acc = utils.predict_persist(model, tst_loader, device,
+                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}_tst.txt')
+        all_tst_acc.append(tst_acc)
 
     # Persisting labels for ensemble training / testing
     utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels.txt')
     utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels_tst.txt')
 
+    print('Complete model scores')
+    print('{:10} {:10} {:10} {:10}'.format('Model ID', 'acc @ trn', 'acc @ val', 'acc @ tst'))
+    print('-' * 43)
+
+    # Subtract training from 1 because fitness is (1 - trn_accuracy)
+    if exec_params.show_test:
+        for ti, tf in zip(top_indices, top_fitness):
+            print(f'{ti:<10} {(1 - tf):10.4} {all_val_acc[ti]:10.4} {all_tst_acc[ti]:10.4}')
+    else:
+        for ti, tf in zip(top_indices, top_fitness):
+            print(f'{ti:<10}{(1 - tf):10.4}{all_val_acc[ti]:10.4} {"?"*10}')
     print('Done.')
