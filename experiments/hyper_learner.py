@@ -15,6 +15,7 @@ from flare.callbacks import Checkpoint
 from misc import utils
 from misc import logs
 from models import model_specs
+from models import utils as ut
 from datasets import specs
 from mh import specs as mh_specs
 
@@ -113,12 +114,7 @@ if __name__ == '__main__':
     exec_params = get_exec_params()
     print(exec_params)
 
-    device = torch.device('cpu')
-    pin_memory = False
-    if torch.cuda.is_available() and not exec_params.no_gpu:
-        device = torch.device('cuda')
-        pin_memory = True
-        torch.backends.cudnn.benchmark = True
+    device, pin_memory = ut.get_device(exec_params.no_gpu)
 
     ds_specs = specs.get_specs(exec_params.ds_name)
     use_sgd = exec_params.ds_name.lower() != 'kmnist'
@@ -164,25 +160,24 @@ if __name__ == '__main__':
     print('Predicting on validation and test sets for ensemble learning')
     print('THERE IS STILL WORK PENDING. DO NOT KILL THIS PROCESS')
 
-    # Predicting on validation
-    all_val_acc = []
+    all_val_acc = dict()
+    all_tst_acc = dict()
     best_models = utils.load_models(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}', top_indices)
+
+    # Predicting on validation / test sets
     for idx, model in zip(top_indices, best_models):
         val_acc = utils.predict_persist(model, val_loader, device,
                                         f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}.txt')
-        all_val_acc.append(val_acc)
-
-    # Predicting on test
-    all_tst_acc = []
-    for idx, model in zip(top_indices, best_models):
         tst_acc = utils.predict_persist(model, tst_loader, device,
                                         f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}_tst.txt')
-        all_tst_acc.append(tst_acc)
+        all_val_acc[idx] = val_acc
+        all_tst_acc[idx] = tst_acc
 
     # Persisting labels for ensemble training / testing
     utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels.txt')
     utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels_tst.txt')
 
+    # Printing the report
     print('Complete model scores')
     print('{:10} {:10} {:10} {:10}'.format('Model ID', 'acc @ trn', 'acc @ val', 'acc @ tst'))
     print('-' * 43)
@@ -192,9 +187,6 @@ if __name__ == '__main__':
         for ti, tf in zip(top_indices, top_fitness):
             print(f'{ti:<10} {(1 - tf):10.4} {all_val_acc[ti]:10.4} {all_tst_acc[ti]:10.4}')
     else:
-        print(len(all_val_acc))
-        print(len(top_fitness))
-        print(top_indices)
         for ti, tf in zip(top_indices, top_fitness):
             print(f'{ti:<10}{(1 - tf):10.4}{all_val_acc[ti]:10.4} {"?"*10}')
     print('Done.')
