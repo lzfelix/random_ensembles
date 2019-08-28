@@ -68,7 +68,7 @@ if __name__ == '__main__':
                              ub=ub,
                              hyperparams=mh_hyperparams)
 
-    best_weights = np.asarray(history.best_agent[0][0]).flatten()
+    best_weights = np.asarray(history.best_agent[-1][0]).flatten()
     print('Learned weights')
     print('---------------')
     print(best_weights)
