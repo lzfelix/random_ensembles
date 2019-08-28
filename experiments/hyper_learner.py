@@ -1,7 +1,8 @@
 import argparse
-from typing import List, NamedTuple
+from typing import List
 
 import numpy as np
+
 import torch
 from torch.nn import functional as F
 from torch import optim as torch_opt
@@ -11,12 +12,12 @@ from torch import nn
 from flare import trainer
 from flare.callbacks import Checkpoint
 
-from opytimizer.optimizers.fa import FA
-
 from misc import utils
 from misc import logs
 from models import model_specs
+from models import utils as ut
 from datasets import specs
+from mh import specs as mh_specs
 
 callno = 0
 scoreboard = dict()
@@ -33,6 +34,7 @@ def get_exec_params() -> argparse.Namespace:
     parser.add_argument('-top_k', help='Retrieve the top k best neural nets found', type=int, default=10)
     parser.add_argument('-trn_split', help='Fraction of train data used for training', type=float, default=0.8)
     parser.add_argument('--no_gpu', help='Uses CPU instead of GPU', action='store_true')
+    parser.add_argument('--show_test', help='Shows model accuracy @ train test in the end summary', action='store_true')
     return parser.parse_args()
 
 
@@ -45,6 +47,7 @@ def make_target_fn(model_prefix: str,
                    image_sz: int,
                    n_channels: int,
                    n_classes: int,
+                   use_sgd: bool,
                    hyperparams_names: List[str]):
     """Creates a target function to be optimized based on some neural net, data and learnable hyperparams
 
@@ -82,7 +85,10 @@ def make_target_fn(model_prefix: str,
         loss_fn = F.nll_loss
 
         # The last two hyperparams are LR and momentum
-        nn_optimizer = torch_opt.SGD(model.parameters(), lr=hyperparam_values[-1], momentum=hyperparam_values[-2])
+        if use_sgd:
+            nn_optimizer = torch_opt.SGD(model.parameters(), lr=hyperparam_values[-1], momentum=hyperparam_values[-2])
+        else:
+            nn_optimizer = torch_opt.Adadelta(model.parameters(), lr=hyperparam_values[-1])
 
         filename = '{}_{}'.format(model_prefix, callno)
         cbs = [Checkpoint('val_accuracy', min_delta=1e-3, filename=filename, save_best=True, increasing=True)]
@@ -108,15 +114,12 @@ if __name__ == '__main__':
     exec_params = get_exec_params()
     print(exec_params)
 
-    device = torch.device('cpu')
-    pin_memory = False
-    if torch.cuda.is_available() and not exec_params.no_gpu:
-        device = torch.device('cuda')
-        pin_memory = True
-        torch.backends.cudnn.benchmark = True
+    device, pin_memory = ut.get_device(exec_params.no_gpu)
 
     ds_specs = specs.get_specs(exec_params.ds_name)
+    use_sgd = exec_params.ds_name.lower() != 'kmnist'
     print(ds_specs)
+    print(f'Using SGD:: {use_sgd}')
 
     experiment = model_specs.experiment_configs[exec_params.ds_name]
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
@@ -132,20 +135,22 @@ if __name__ == '__main__':
                                image_sz=ds_specs.img_size,
                                n_channels=ds_specs.n_channels,
                                n_classes=ds_specs.n_classes,
+                               use_sgd=use_sgd,
                                hyperparams_names=experiment.net.learnable_hyperparams())
 
     n_variables = len(experiment.lb)
-    mh_hyperparams = dict(alpha=0.5, beta=0.2, gamma=1.0)
+    optimization_specs = mh_specs.get_specs(exec_params.mh_name)
+    print(f'MH hyperparams: {optimization_specs}')
 
     # Learning the model
-    history = utils.optimize(FA,
+    history = utils.optimize(optimization_specs.mh_method,
                              target=target_fn,
                              n_agents=exec_params.n_agents,
                              n_variables=n_variables,
                              n_iterations=exec_params.n_iters,
                              lb=experiment.lb,
                              ub=experiment.ub,
-                             hyperparams=mh_hyperparams)
+                             hyperparams=optimization_specs.hyperparams)
 
     # Keeping the top_k models. More than one model can be selected from each metaheuristic iteration
     top_indices, top_fitness = utils.get_top_models(scoreboard, exec_params.top_k)
@@ -155,19 +160,33 @@ if __name__ == '__main__':
     print('Predicting on validation and test sets for ensemble learning')
     print('THERE IS STILL WORK PENDING. DO NOT KILL THIS PROCESS')
 
-    # Predicting on validation
+    all_val_acc = dict()
+    all_tst_acc = dict()
     best_models = utils.load_models(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}', top_indices)
-    for idx, model in zip(top_indices, best_models):
-        utils.predict_persist(model, val_loader, device,
-                              f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}.txt')
 
-    # Predicting on test
+    # Predicting on validation / test sets
     for idx, model in zip(top_indices, best_models):
-        utils.predict_persist(model, tst_loader, device,
-                              f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}_tst.txt')
+        val_acc = utils.predict_persist(model, val_loader, device,
+                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}.txt')
+        tst_acc = utils.predict_persist(model, tst_loader, device,
+                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}_tst.txt')
+        all_val_acc[idx] = val_acc
+        all_tst_acc[idx] = tst_acc
 
     # Persisting labels for ensemble training / testing
     utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels.txt')
     utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels_tst.txt')
 
+    # Printing the report
+    print('Complete model scores')
+    print('{:10} {:10} {:10} {:10}'.format('Model ID', 'acc @ trn', 'acc @ val', 'acc @ tst'))
+    print('-' * 43)
+
+    # Subtract training from 1 because fitness is (1 - trn_accuracy)
+    if exec_params.show_test:
+        for ti, tf in zip(top_indices, top_fitness):
+            print(f'{ti:<10} {(1 - tf):10.4} {all_val_acc[ti]:10.4} {all_tst_acc[ti]:10.4}')
+    else:
+        for ti, tf in zip(top_indices, top_fitness):
+            print(f'{ti:<10}{(1 - tf):10.4}{all_val_acc[ti]:10.4} {"?"*10}')
     print('Done.')

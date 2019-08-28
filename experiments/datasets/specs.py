@@ -11,6 +11,7 @@ class DatasetSpecs:
     def __repr__(self):
         return str(self.__dict__)
 
+
 _specs = dict(
     mnist=DatasetSpecs(n_channels=1, img_size=28, n_classes=10, loading_fn=datasets.mnist_loaders),
     kmnist=DatasetSpecs(n_channels=1, img_size=28, n_classes=10, loading_fn=datasets.kmnist_loaders),

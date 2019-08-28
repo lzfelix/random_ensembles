@@ -161,3 +161,13 @@ def accuracy(y_pred: np.ndarray,
              y: np.ndarray) -> float:
     """Computes y_pred accuracy."""
     return (y_pred.argmax(-1) == y).sum() / y.size
+
+
+def get_device(no_gpu: bool) -> Tuple[torch.device, bool]:
+    device = torch.device('cpu')
+    pin_memory = False
+    if torch.cuda.is_available() and not no_gpu:
+        device = torch.device('cuda')
+        pin_memory = True
+        torch.backends.cudnn.benchmark = True
+    return device, pin_memory

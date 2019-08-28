@@ -74,7 +74,7 @@ def load_models(models_prefix: str,
 def predict_persist(model,
                     eval_gen,
                     device,
-                    destination: str) -> None:
+                    destination: str) -> float:
     """Computes the model predictions and stores them in a text file.
 
     # Arguments
@@ -82,6 +82,9 @@ def predict_persist(model,
         eval_gen:
         device:
         destination: Path of the text file with the computed predictions.
+
+    # Return
+        The model accuracy on the provided generator.
 
     # File layout:
             n_samples, val_accuracy
@@ -105,6 +108,7 @@ def predict_persist(model,
         dfile.write('{} {}\n'.format(y_val.numel(), acc))
         for logit in logits:
             dfile.write('{}\n'.format(tensor2str(logit)))
+    return acc
 
 
 def load_predictions(filepath: str) -> np.ndarray:

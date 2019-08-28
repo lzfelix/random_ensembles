@@ -15,6 +15,7 @@ def get_exec_args() -> argparse.Namespace:
     parser.add_argument('-val_preds', help='List of candidate predictions in the validation set', type=str, nargs='+',
                         required=True)
     parser.add_argument('-n_iters', help='MH amount of iterations', type=int, default=10)
+    parser.add_argument('--show_test', help='Shows model accuracy @ train test in the end summary', action='store_true')
 
     return parser.parse_args()
 
@@ -73,13 +74,14 @@ if __name__ == '__main__':
     print(best_weights)
 
     print('Inidividual val. model accuracies')
-    print('---------------------------------')
-    for i, pred in enumerate(val_all_preds):
-        acc = utils.accuracy(pred, val_y_true)
-        print(f'\t. {i:<3} - {acc}')
+    print('{:10} {:10} {:10}'.format('Model ID', 'acc @ val', 'acc @ tst'))
+    print('-' * 33)
+    for i, (val_pred, tst_pred) in enumerate(zip(val_all_preds, tst_all_preds)):
+        val_acc = utils.accuracy(val_pred, val_y_true)
+        tst_acc = utils.accuracy(tst_pred, tst_y_true) if exec_args.show_test else '????'
+        print(f'{i:<10} {val_acc:>10.4}{tst_acc:>10.4}')
 
     val_acc = ensemble.evaluate_ensemble(best_weights, val_all_preds, val_y_true)
-    print(f'Ensemble val. accuracy: {val_acc}')
-
-    tst_acc = ensemble.evaluate_ensemble(best_weights, tst_all_preds, tst_y_true)
+    tst_acc = tst_acc if exec_args.show_test else '????'
+    print(f'\nEnsemble val. accuracy: {val_acc}')
     print(f'Ensemble tst. accuracy: {tst_acc}')

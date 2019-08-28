@@ -12,11 +12,9 @@ from flare import trainer
 
 from misc import utils
 from misc import logs
+from models import utils as ut
 from models import model_specs
 from datasets import specs
-
-IMAGE_SZ = 28
-N_CLASSES = 10
 
 
 def get_exec_params() -> argparse.Namespace:
@@ -27,6 +25,7 @@ def get_exec_params() -> argparse.Namespace:
     parser.add_argument('-batch_sz', help='NN Batch size', type=int, default=128)
     parser.add_argument('-trn_split', help='Fraction of train data used for training', type=float, default=0.8)
     parser.add_argument('--no_gpu', help='Uses CPU instead of GPU', action='store_true')
+    parser.add_argument('--show_test', help='Shows model accuracy @ train test in the end summary', action='store_true')
     return parser.parse_args()
 
 
@@ -38,19 +37,15 @@ if __name__ == '__main__':
     exec_params = get_exec_params()
     print(exec_params)
 
-    device = torch.device('cpu')
-    pin_memory = False
-    if torch.cuda.is_available() and not exec_params.no_gpu:
-        print('Running model on GPU')
-        device = torch.device('cuda')
-        pin_memory = True
-        torch.backends.cudnn.benchmark = True
+    device, pin_memory = ut.get_device(exec_params.no_gpu)
 
     ds_specs = specs.get_specs(exec_params.ds_name)
+    use_sgd = exec_params.ds_name.lower() != 'kmnist'
+    print(f'Using SGD: {use_sgd}')
+
     train_loader, val_loader, tst_loader = ds_specs.loading_fn(exec_params.batch_sz,
                                                                trn_split_sz=exec_params.trn_split,
                                                                pin_memory=pin_memory)
-
     experiment = model_specs.experiment_configs[exec_params.ds_name]
     n_hyperparams = len(experiment.lb)
     assert len(experiment.lb) == len(experiment.ub)
@@ -58,7 +53,8 @@ if __name__ == '__main__':
     h_names = experiment.net.learnable_hyperparams()
     model_prefix = f'./trained/{exec_params.ds_name}_random'
 
-    accuracies = list()
+    val_accuracies = list()
+    tst_accuracies = list()
     start_time = time.time()
     for model_no in range(exec_params.n_models):
         print(f'------------------------- Model {model_no + 1} / {exec_params.n_models} -------------------------')
@@ -76,7 +72,10 @@ if __name__ == '__main__':
         loss_fn = F.nll_loss
 
         # The last two hyperparams are LR and momentum
-        nn_optimizer = torch_opt.SGD(model.parameters(), lr=h_values[-1], momentum=h_values[-2])
+        if use_sgd:
+            nn_optimizer = torch_opt.SGD(model.parameters(), lr=h_values[-1], momentum=h_values[-2])
+        else:
+            nn_optimizer = torch_opt.Adadelta(model.parameters(), lr=h_values[-1])
 
         filename = '{}_{}'.format(model_prefix, model_no)
         cbs = [Checkpoint('val_accuracy', min_delta=1e-3, filename=filename, save_best=True, increasing=True)]
@@ -87,21 +86,31 @@ if __name__ == '__main__':
                                           callbacks=cbs)
 
         best_model = torch.load(filename + '.pth').to(device)
-        eval_metrics = trainer.evaluate_on_loader(best_model, val_loader, loss_fn, batch_first=True,
-                                                  device=device, verbosity=0)
-        accuracies.append(eval_metrics['accuracy'])
 
         # Predicting on validation and test sets for ensemble learning / evaluation
-        utils.predict_persist(best_model, val_loader, device,
-                              f'predictions/{exec_params.ds_name}_random_{model_no}.txt')
-        utils.predict_persist(best_model, tst_loader, device,
-                              f'predictions/{exec_params.ds_name}_random_{model_no}_tst.txt')
+        val_acc = utils.predict_persist(best_model, val_loader, device,
+                                        f'predictions/{exec_params.ds_name}_random_{model_no}.txt')
+        tst_acc = utils.predict_persist(best_model, tst_loader, device,
+                                        f'predictions/{exec_params.ds_name}_random_{model_no}_tst.txt')
+        val_accuracies.append(val_acc)
+        tst_accuracies.append(tst_acc)
+
     end_time = time.time()
 
     # Persisting labels for ensemble training / evaluation
     utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_random_labels.txt')
     utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_random_labels_tst.txt')
 
+    # Printing the report
     print(f'Finished. It took {end_time - start_time} seconds')
-    for model_no, accuracy in enumerate(accuracies):
-        print(f'\t. {model_no:<3} - {accuracy}')
+
+    # Had to rewrite the same code a thousand times, now I have a thousand versions of it :)
+    print('Complete model scores')
+    print('{:10} {:10} {:10}'.format('Model ID', 'acc @ val', 'acc @ tst'))
+    print('-' * 33)
+    if exec_params.show_test:
+        tst_accuracies = ['????'] * len(tst_accuracies)
+
+    for model_no, (val_acc, tst_acc) in enumerate(zip(val_accuracies, tst_accuracies)):
+        print(f'{model_no:<10} {val_acc:10.4} {tst_acc:10.4}')
+    print('Done.')
