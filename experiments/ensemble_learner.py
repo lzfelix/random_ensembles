@@ -78,12 +78,10 @@ if __name__ == '__main__':
     print('-' * 33)
     for i, (val_pred, tst_pred) in enumerate(zip(val_all_preds, tst_all_preds)):
         val_acc = utils.accuracy(val_pred, val_y_true)
-        tst_acc = utils.accuracy(tst_pred, tst_y_true) if exec_args.show_test else '?' * 4
+        tst_acc = utils.accuracy(tst_pred, tst_y_true) if exec_args.show_test else '????'
         print(f'{i:<10} {val_acc:>10.4}{tst_acc:>10.4}')
 
     val_acc = ensemble.evaluate_ensemble(best_weights, val_all_preds, val_y_true)
+    tst_acc = tst_acc if exec_args.show_test else '????'
     print(f'\nEnsemble val. accuracy: {val_acc}')
-
-    if exec_args.show_test:
-        tst_acc = ensemble.evaluate_ensemble(best_weights, tst_all_preds, tst_y_true)
-        print(f'Ensemble tst. accuracy: {tst_acc}')
+    print(f'Ensemble tst. accuracy: {tst_acc}')
