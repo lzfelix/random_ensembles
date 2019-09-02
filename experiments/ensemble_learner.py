@@ -73,7 +73,7 @@ if __name__ == '__main__':
     print('---------------')
     print(best_weights)
 
-    print('Inidividual val. model accuracies')
+    print('Individual val. model accuracies')
     print('{:10} {:10} {:10}'.format('Model ID', 'acc @ val', 'acc @ tst'))
     print('-' * 33)
     for i, (val_pred, tst_pred) in enumerate(zip(val_all_preds, tst_all_preds)):
