@@ -108,7 +108,7 @@ if __name__ == '__main__':
     print('Complete model scores')
     print('{:10} {:10} {:10}'.format('Model ID', 'acc @ val', 'acc @ tst'))
     print('-' * 33)
-    if exec_params.show_test:
+    if not exec_params.show_test:
         tst_accuracies = ['????'] * len(tst_accuracies)
 
     for model_no, (val_acc, tst_acc) in enumerate(zip(val_accuracies, tst_accuracies)):
