@@ -8,7 +8,7 @@ from models import shapes
 class KMnistNet(nn.Module):
     """From https://github.com/rois-codh/kmnist/blob/master/benchmarks/kuzushiji_mnist_cnn.py"""
     def __init__(self,
-                 img_sz=32,
+                 img_sz=28,
                  in_channels=1,
                  n_classes=10,
                  filters_1=32,
