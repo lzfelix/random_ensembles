@@ -12,4 +12,4 @@ do
 done
 
 # Running the actual ensemble learner
-python ensemble_learner.py predictions/"$DATASET"_random_labels.txt predictions/"$DATASET"_random_labels_tst.txt -val_preds $VAL_PREDS
+python ensemble_learner.py predictions/"$DATASET"_random_labels.txt predictions/"$DATASET"_random_labels_tst.txt -val_preds $VAL_PREDS > mnist_random_ensemble.txt 2>&1 &
