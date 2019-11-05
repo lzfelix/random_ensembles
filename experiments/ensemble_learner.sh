@@ -2,7 +2,7 @@
 
 # Initial variables
 DATASET=mnist
-N_MODELS=10
+N_MODELS=15
 
 # Looping for every possible model
 for (( i=0; i<$N_MODELS; i++ ))
@@ -12,4 +12,4 @@ do
 done
 
 # Running the actual ensemble learner
-python ensemble_learner.py predictions/"$DATASET"_random_labels.txt predictions/"$DATASET"_random_labels_tst.txt -val_preds $VAL_PREDS > mnist_random_ensemble.txt 2>&1 &
+python ensemble_learner.py predictions/"$DATASET"_random_labels.txt predictions/"$DATASET"_random_labels_tst.txt -val_preds $VAL_PREDS --show_test > mnist_random_ensemble.txt 2>&1 &
