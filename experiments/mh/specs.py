@@ -1,5 +1,6 @@
 from opytimizer.optimizers import bha
 from opytimizer.optimizers import fa
+from opytimizer.optimizers import pso
 from opytimizer.core.optimizer import Optimizer
 
 
@@ -13,8 +14,9 @@ class MHSpecs:
 
 
 _specs = dict(
+    bha=MHSpecs(bha.BHA, dict()),
     fa=MHSpecs(fa.FA, dict(alpha=0.5, beta=0.2, gamma=1.0)),
-    bha=MHSpecs(bha.BHA, dict())
+    pso=MHSpecs(pso.PSO, dict(w=0.7, c1=1.7, c2=1.7))
 )
 
 
