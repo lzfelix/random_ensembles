@@ -82,6 +82,8 @@ if __name__ == '__main__':
         print(f'{i:<10} {val_acc:>10.4}{tst_acc:>10.4}')
 
     val_acc = ensemble.evaluate_ensemble(best_weights, val_all_preds, val_y_true)
+    tst_acc = ensemble.evaluate_ensemble(best_weights, tst_all_preds, tst_y_true)
+
     tst_acc = tst_acc if exec_args.show_test else '????'
     print(f'\nEnsemble val. accuracy: {val_acc}')
     print(f'Ensemble tst. accuracy: {tst_acc}')

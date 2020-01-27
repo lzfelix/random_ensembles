@@ -49,6 +49,7 @@ def evaluate_ensemble(w: np.ndarray,
         The ensemble accuracy.
     """
     w = w.flatten() / w.sum()
+    w = w / max(w.sum(), 1e-4)
     n_candidates = w.shape[0]
 
     y_combined = np.zeros_like(y_pred[0])
