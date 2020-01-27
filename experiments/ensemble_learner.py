@@ -57,7 +57,7 @@ if __name__ == '__main__':
     n_variables = val_all_preds.shape[0]
     lb = [0] * n_variables
     ub = [1] * n_variables
-    mh_hyperparams = dict(w=1.7, c1=2, c2=1.7)
+    mh_hyperparams = dict(w=0.7, c1=1.7, c2=1.7)
 
     history = utils.optimize(PSO,
                              target=ensemble_fun,
