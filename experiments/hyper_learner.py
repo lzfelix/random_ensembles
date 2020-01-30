@@ -31,7 +31,7 @@ def get_exec_params() -> argparse.Namespace:
     parser.add_argument('-n_iters', help='MH amount of iterations', type=int, default=10)
     parser.add_argument('-n_epochs', help='NN Amount of epochs to train each candidate', type=int, default=15)
     parser.add_argument('-batch_sz', help='NN Batch size', type=int, default=128)
-    parser.add_argument('-top_k', help='Retrieve the top k best neural nets found', type=int, default=10)
+    parser.add_argument('-top_k', help='Retrieve the top k best neural nets found', type=int, default=15)
     parser.add_argument('-trn_split', help='Fraction of train data used for training', type=float, default=0.8)
     parser.add_argument('--no_gpu', help='Uses CPU instead of GPU', action='store_true')
     parser.add_argument('--show_test', help='Shows model accuracy @ train test in the end summary', action='store_true')
