@@ -60,6 +60,49 @@ def evaluate_ensemble(w: np.ndarray,
     acc = (y_hat == y_true).sum() / y_true.shape[0]
     return acc
 
+def evaluate_majority_voting(y_pred: np.ndarray,
+                      y_true: np.ndarray) -> float:
+    """Calculates the majority voting between models and compute its accuracy.
+
+    # Arguments
+        y_pred: Tensor with shape `[n_candidates, n_samples, n_classes]`.
+        y_true: Tensor with the ground-truth labels and shape `[n_samples, n_classes]`.
+
+    # Return
+        The majority voted accuracy.
+    """
+
+    # Decoding predictions from one-hot encoding
+    y_pred = np.argmax(y_pred, axis=2)
+
+    # Creating a list of possible `y_hat`
+    y_hat = []
+
+    # For every possible sample
+    for i in range(y_pred.shape[1]):
+        # Creates a list of empty votes
+        votes = []
+
+        # For every possible candidate model
+        for j in range(y_pred.shape[0]):
+            # Appends the prediction to the voting list
+            votes.append(y_pred[j][i])
+
+        # Appends the voting list to the `y_hat`
+        y_hat.append(votes)
+
+    # Transforms the `y_hat` back into an array
+    y_hat = np.asarray(y_hat)
+
+    # Calculates the most voted predictions
+    maj_votes = [np.argmax(np.bincount(pred)) for pred in y_hat]
+
+    # Gathers the `y_hat` back as an array
+    y_hat = np.asarray(maj_votes)
+
+    acc = (y_hat == y_true).sum() / y_true.shape[0]
+    return acc
+
 
 def _validate_predictions(preds: np.ndarray,
                           ground: np.ndarray) -> None:
