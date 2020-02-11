@@ -1,3 +1,14 @@
+"""
+Computes the accuracy mean and standard deviation for all weak learners using logs generated while training an ensemble. This script can be used to parse
+results from combining random and fine-tuned weak learners into a single modell.
+
+Expects the following directory structure:
+
+./
+    cifar10_bha_ensemble_0.txt
+    ...
+"""
+
 import re
 import argparse
 from typing import Tuple, List

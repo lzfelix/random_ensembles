@@ -20,6 +20,19 @@ This script assumes the following tree structure:
         10/
             ...
 
+or
+
+./
+    CIFAR10
+        Experiment 1/
+            5/
+              cifar10_bha_ensemble_0.txt
+              ...  
+            10/
+                ...
+            15/
+                ...
+
 # Notes:
     - All files, except ones starting with '.' are read.
     - The name of the experiment files does not matter.
