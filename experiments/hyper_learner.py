@@ -154,7 +154,7 @@ if __name__ == '__main__':
 
     # Keeping the top_k models. More than one model can be selected from each metaheuristic iteration
     top_indices, top_fitness = utils.get_top_models(scoreboard, exec_params.top_k)
-    for ti, tf in zip(top_indices, top_fitness):
+    for ti, tf in zip(top_indices, top_fitrn_tness):
         print(f'{ti:<5} {tf:5}')
 
     print('Predicting on validation and test sets for ensemble learning')
@@ -165,17 +165,18 @@ if __name__ == '__main__':
     best_models = utils.load_models(f'./trained/{exec_params.ds_name}_{exec_params.mh_name}', top_indices)
 
     # Predicting on validation / test sets
+    top_k = exec_params.top_k
     for idx, model in zip(top_indices, best_models):
         val_acc = utils.predict_persist(model, val_loader, device,
-                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}.txt')
+                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{top_k}_{idx}.txt')
         tst_acc = utils.predict_persist(model, tst_loader, device,
-                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{idx}_tst.txt')
+                                        f'predictions/{exec_params.ds_name}_{exec_params.mh_name}_{top_k}_{idx}_tst.txt')
         all_val_acc[idx] = val_acc
         all_tst_acc[idx] = tst_acc
 
     # Persisting labels for ensemble training / testing
-    utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels.txt')
-    utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_labels_tst.txt')
+    utils.store_labels(val_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_{top_k}_labels.txt')
+    utils.store_labels(tst_loader, f'./predictions/{exec_params.ds_name}_{exec_params.mh_name}_{top_k}_labels_tst.txt')
 
     # Printing the report
     print('Complete model scores')

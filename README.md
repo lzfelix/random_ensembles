@@ -1,7 +1,7 @@
 # Random Ensembles
 
 To reproduce a smaller version of the code and get an overall idea, please run
-`hyperparam_learning.ipynb` and then `ensemble_learning.ipynb'.
+`hyperparam_learning.ipynb` and then `ensemble_learning.ipynb`.
 
 
 # Scripts
