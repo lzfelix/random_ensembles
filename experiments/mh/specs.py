@@ -1,4 +1,5 @@
-from opytimizer.optimizers.swarm import BH, FA, PSO
+from opytimizer.optimizers.science import BH
+from opytimizer.optimizers.swarm import FA, PSO
 from opytimizer.core import Optimizer
 
 

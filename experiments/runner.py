@@ -40,3 +40,4 @@ if __name__ == '__main__':
 
     trainer.train_on_loader(model, trn_gen, val_gen, F.nll_loss, opt,
                             n_epochs=exec_params.n_epochs, batch_first=True, device=device)
+
