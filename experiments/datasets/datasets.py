@@ -37,6 +37,14 @@ def cifar10_loaders(batch_sz: int,
     return _load_dataset(datasets.CIFAR10, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), batch_sz, trn_split_sz, seed, pin_memory)
 
 
+def cifar100_loaders(batch_sz: int,
+                    trn_split_sz: float = 0.8,
+                    seed: int = 1337,
+                    pin_memory: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader]:
+
+    return _load_dataset(datasets.CIFAR100, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), batch_sz, trn_split_sz, seed, pin_memory)
+
+
 def _load_dataset(dataset_fn,
                   means: Tuple,
                   stds: Tuple,

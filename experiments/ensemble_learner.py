@@ -5,7 +5,7 @@ import numpy as np
 from misc import utils
 from models import ensemble
 
-from opytimizer.optimizers.pso import PSO
+from opytimizer.optimizers.swarm import PSO
 
 
 def get_exec_args() -> argparse.Namespace:

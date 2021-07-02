@@ -6,9 +6,8 @@ from torch import nn
 
 from opytimizer import Opytimizer
 from opytimizer.utils.history import History
-from opytimizer.core.function import Function
-from opytimizer.core.optimizer import Optimizer
-from opytimizer.spaces.search import SearchSpace
+from opytimizer.core import Function, Optimizer
+from opytimizer.spaces import SearchSpace
 
 from flare import trainer
 
@@ -23,11 +22,14 @@ def optimize(metaheuristic: Optimizer,
              hyperparams: Dict[str, Any]) -> History:
     """Abstract all the Opytimizer mechanics into a single method."""
 
-    space = SearchSpace(n_agents, n_variables, n_iterations, lb, ub)
-    optimizer = metaheuristic(hyperparams=hyperparams)
+    space = SearchSpace(n_agents, n_variables, lb, ub)
+    optimizer = metaheuristic(hyperparams)
 
     task = Opytimizer(space, optimizer, Function(target))
-    return task.start()
+
+    task.start(n_iterations)
+
+    return task.history
 
 
 def get_top_models(scoreboard: Dict[int, int],
