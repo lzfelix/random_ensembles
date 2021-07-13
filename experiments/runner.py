@@ -1,3 +1,4 @@
+import time
 import argparse
 
 from torch import optim
@@ -38,6 +39,12 @@ if __name__ == '__main__':
     else:
         opt = optim.SGD(model.parameters(), lr=exec_params.lr, momentum=exec_params.momentum)
 
+    start = time.perf_counter()
     trainer.train_on_loader(model, trn_gen, val_gen, F.nll_loss, opt,
                             n_epochs=exec_params.n_epochs, batch_first=True, device=device)
+    end = time.perf_counter()
 
+    print(f'Took {end - start} seconds')
+    print('Test metrics (running in silent mode, just wait)')
+    metrics = trainer.evaluate_on_loader(model, tst_gen, F.nll_loss, batch_first=True, device=device, verbosity=0)
+    print(metrics)
