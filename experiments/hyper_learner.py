@@ -154,7 +154,7 @@ if __name__ == '__main__':
 
     # Keeping the top_k models. More than one model can be selected from each metaheuristic iteration
     top_indices, top_fitness = utils.get_top_models(scoreboard, exec_params.top_k)
-    for ti, tf in zip(top_indices, top_fitrn_tness):
+    for ti, tf in zip(top_indices, top_fitness):
         print(f'{ti:<5} {tf:5}')
 
     print('Predicting on validation and test sets for ensemble learning')
