@@ -30,11 +30,13 @@ either of them with the `-h` flag shows their running options.
 ## 1. Training models with default hyperparameters
 
 1. Run `experiments/runner.py`. The `-h` flag shows instructions on how to run experiments.
-    It's important to save all output logs for results extraction. Such step can be achieved
-    with `python runner.py mnist -n_epochs 1 > experiment_1.txt 2>&1 &`, for instance;
-2. Move all experiment logs to a single folder, for instance `../results/cifar100/default/`;
-3. Then run the parsing script to extract test accuracy, test lost and training time from 
-    multiple experiments with `python parser/parse_baseline_output_logs.py results/cifar100/default/`.
+    It's important to save all output logs for results extraction. For instance, it's possible
+    to run MNIST network training and save its logs with
+    `python runner.py mnist -n_epochs 3 > ../logs/results/mnist/default/run_1 2>&1 &`;
+2. Such a procedure must be repeated 15 times to compute the statistical tests from the paper;
+3. Next, move all logs to a single folder, in step 1 that is already done, so all logs are
+   stored in `../logs/results/mnist/`, so we can compute average test accuracy, test loss and training
+   time with `python parser/parse_baseline_output_logs.py results/mnist/default/`.
 
 
 
