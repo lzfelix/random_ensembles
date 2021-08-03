@@ -27,7 +27,7 @@ either of them with the `-h` flag shows their running options.
 
 
 
-## Training models with default hyperparameters
+## 1. Training models with default hyperparameters
 
 1. Run `experiments/runner.py`. The `-h` flag shows instructions on how to run experiments.
     It's important to save all output logs for results extraction. Such step can be achieved
@@ -38,11 +38,11 @@ either of them with the `-h` flag shows their running options.
 
 
 
-## Training models with hyperparameters lerned via PSO/BH (week learners)
+## 2. Training models with hyperparameters lerned via PSO/BH (weak learners)
 
 Before running this experiments, notice that:
 
-> 1. This step will store individual network predictions for training and test set at `experiments/predictions/[dataset-name]\_[metaheuristic-name]\_[n-agents]_[keep-k-neural-nets].txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run ensemble experiments. 
+> 1. This step will store individual network predictions for training and test set at `experiments/predictions/[dataset-name]\_[metaheuristic-name]\_[n-agents]_[keep-k-neural-nets].txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run the ensemble experiments. 
 > 2. Be careful to not let multiple experiment runs override previous predictions in this folder!
 
 
