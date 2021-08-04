@@ -41,7 +41,7 @@ either of them with the `-h` flag shows their running options.
 
 
 
-## 2. Training models with hyperparameters lerned via PSO/BH (weak learners)
+## 2. Training models with hyperparameters fine-tuned via PSO/BH (weak learners)
 
 Before running this experiments, notice that:
 
@@ -51,3 +51,10 @@ Before running this experiments, notice that:
    1. Run `experiments/hyper_learner.py` to fine-tune individual neural networks hyperparameters. As before, the `-h` flag shows instructions on how to set parameters to match the setup described in the paper. Don't forget to store the produced logs to extract results, which are used to compute fine tuned models accuracy;
    2. Just don't forget to add the `--show_test` flag to the experiment, otherwise test metrics won't be displayed in the final logs;
    3. This script should be executed only once, since it will generate 15 models. In the final lines of the logs it's possible to retrieve a list of accuracies to compute the mean and standard error.
+
+
+## 3. Training models with random hyperparameters
+
+1. To train models with random hyperparameters run `python random_learner.py` and store the logs in an appropriate location;
+2. Predictions will be stored in `experiments/predictions/{dataset-name}_random_{model-id}.txt` and these will be used for ensemble learning;
+3. Once again, there's no parser for this experiment since the logs will contain the relevant results in its last rows.
