@@ -1,10 +1,25 @@
 # Random Ensembles
-
 To reproduce a smaller version of the code and get an overall idea, please run
 `hyperparam_learning.ipynb` and then `ensemble_learning.ipynb`.
 
-# Scripts
 
+# Table of Contents
+- [Random Ensembles](#random-ensembles)
+- [Scripts](#scripts)
+- [Setup](#setup)
+- [Reproducing results](#reproducing-results)
+  * [Part I: Weak learners](#part-i--weak-learners)
+    + [1. Training models with default hyperparameters](#1-training-models-with-default-hyperparameters)
+    + [2. Training models with hyperparameters fine-tuned via PSO and BH](#2-training-models-with-hyperparameters-fine-tuned-via-pso-and-bh)
+    + [3. Training models with random hyperparameters](#3-training-models-with-random-hyperparameters)
+  * [Part II: Ensembles](#part-ii--ensembles)
+    + [Meta heuristic-based ensembles](#meta-heuristic-based-ensembles)
+    + [Majority-voting ensembles](#majority-voting-ensembles)
+    + [Weighted-voting ensembles](#weighted-voting-ensembles)
+
+
+
+# Scripts
 The following scripts are available to run the experiments. Running
 either of them with the `-h` flag shows their running options. 
 
@@ -12,23 +27,20 @@ either of them with the `-h` flag shows their running options.
    - `ensemble_learner.py` Learns weighted ensembles using some metaheuristic;
    - `runner.py` Runs the baseline models with their default hyperparameters
 
+# Setup
+   - Requires `Python==3.7`
+   - Run `pip install -r requirements.txt`
 
 
 # Reproducing results
 
-- Each experiment should be executed 15 times to compute proper mean and standard deviation
+Results reproduction is divided in two parts: first we describe how to reproduce weak learners
+(ie: individual models) results and then how to combine such models outputs into ensemble results
 
 
+## Part I: Weak learners
 
-## Setup
-
-- Requires `Python==3.7`
-- Run `pip install -r requirements.txt`
-
-
-
-## 1. Training models with default hyperparameters
-
+### 1. Training models with default hyperparameters
 1. Run `experiments/runner.py`. The `-h` flag shows instructions on how to run experiments.
     It's important to save all output logs for results extraction. For instance, it's possible
     to run MNIST network training and save its logs with
@@ -41,8 +53,7 @@ either of them with the `-h` flag shows their running options.
 
 
 
-## 2. Training models with hyperparameters fine-tuned via PSO/BH (weak learners)
-
+### 2. Training models with hyperparameters fine-tuned via PSO and BH
 Before running this experiments, notice that:
 
 - This step will store the top k individual network predictions for training and test set at `experiments/predictions/{dataset-name}_{metaheuristic-name}_{n-agents}_{agent-id}.txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run the ensemble experiments. Other two files will be generated containing validation and test sets ground truths;
@@ -53,8 +64,19 @@ Before running this experiments, notice that:
    3. This script should be executed only once, since it will generate 15 models. In the final lines of the logs it's possible to retrieve a list of accuracies to compute the mean and standard error.
 
 
-## 3. Training models with random hyperparameters
-
+### 3. Training models with random hyperparameters
 1. To train models with random hyperparameters run `python random_learner.py` and store the logs in an appropriate location;
 2. Predictions will be stored in `experiments/predictions/{dataset-name}_random_{model-id}.txt` and these will be used for ensemble learning;
 3. Once again, there's no parser for this experiment since the logs will contain the relevant results in its last rows.
+
+
+## Part II: Ensembles
+
+### Meta heuristic-based ensembles
+TODO
+
+### Majority-voting ensembles
+TODO
+
+### Weighted-voting ensembles
+TODO
