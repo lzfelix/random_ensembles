@@ -55,8 +55,11 @@ if __name__ == '__main__':
 
     val_accuracies = list()
     tst_accuracies = list()
+    all_execution_times = list()
     start_time = time.time()
+
     for model_no in range(exec_params.n_models):
+        individual_time_start = time.time()
         print(f'------------------------- Model {model_no + 1} / {exec_params.n_models} -------------------------')
 
         h_values = [_sample_value(experiment.lb[i], experiment.ub[i]) for i in range(n_hyperparams)]
@@ -84,6 +87,7 @@ if __name__ == '__main__':
         history = trainer.train_on_loader(model, train_loader, val_loader, loss_fn, nn_optimizer,
                                           n_epochs=exec_params.n_epochs, batch_first=True, device=device,
                                           callbacks=cbs)
+        individual_time_end = time.time()
 
         best_model = torch.load(filename + '.pth').to(device)
 
@@ -94,6 +98,7 @@ if __name__ == '__main__':
                                         f'predictions/{exec_params.ds_name}_random_{model_no}_tst.txt')
         val_accuracies.append(val_acc)
         tst_accuracies.append(tst_acc)
+        all_execution_times.append(individual_time_end - individual_time_start)
 
     end_time = time.time()
 
@@ -106,11 +111,11 @@ if __name__ == '__main__':
 
     # Had to rewrite the same code a thousand times, now I have a thousand versions of it :)
     print('Complete model scores')
-    print('{:10} {:10} {:10}'.format('Model ID', 'acc @ val', 'acc @ tst'))
-    print('-' * 33)
+    print('{:10} {:10} {:10} {:10}'.format('Model ID', 'acc @ val', 'acc @ tst', 'trn. time (s)'))
+    print('-' * 44)
     if not exec_params.show_test:
         tst_accuracies = ['????'] * len(tst_accuracies)
 
-    for model_no, (val_acc, tst_acc) in enumerate(zip(val_accuracies, tst_accuracies)):
-        print(f'{model_no:<10} {val_acc:10.4} {tst_acc:10.4}')
+    for model_no, (val_acc, tst_acc, trn_time) in enumerate(zip(val_accuracies, tst_accuracies, all_execution_times)):
+        print(f'{model_no:<10} {val_acc:10.4} {tst_acc:10.4} {trn_time}')
     print('Done.')
