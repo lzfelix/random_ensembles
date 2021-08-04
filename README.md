@@ -35,8 +35,9 @@ either of them with the `-h` flag shows their running options.
     `python runner.py mnist -n_epochs 3 > ../logs/results/mnist/default/run_1 2>&1 &`;
 2. Such a procedure must be repeated 15 times to compute the statistical tests from the paper;
 3. Next, move all logs to a single folder, in step 1 that is already done, so all logs are
-   stored in `../logs/results/mnist/`, so we can compute average test accuracy, test loss and training
-   time with `python parser/parse_baseline_output_logs.py results/mnist/default/`.
+   stored in `../logs/results/mnist/`. Further, it's possible to compute averages for test accuracy,
+   test loss and training times with
+   `python parser/parse_baseline_output_logs.py results/mnist/default/`.
 
 
 
@@ -44,12 +45,9 @@ either of them with the `-h` flag shows their running options.
 
 Before running this experiments, notice that:
 
-> 1. This step will store individual network predictions for training and test set at `experiments/predictions/[dataset-name]\_[metaheuristic-name]\_[n-agents]_[keep-k-neural-nets].txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run the ensemble experiments. 
-> 2. Be careful to not let multiple experiment runs override previous predictions in this folder!
-
-
-
-1. Run `experiments/hyper_learner.py` to learn the good hyperparameters for each neural network individually. As before, the `-h` flag shows instructions on how to set parameters to match the setup described in the paper. Don't forget to store the produced logs to extract results, as aforementioned;
-2. Move all experiment logs to a single folder, for instance `../results/cifar100/week_learners/5_agents/`
-3. Then run the parsing script to extract test accuracy and optimization time from multiple experiments with `python parser/parse_hyper_learner_output_logs.py ../results/cifar100/week_learners/5_agents/`
-
+- This step will store the top k individual network predictions for training and test set at `experiments/predictions/{dataset-name}_{metaheuristic-name}_{n-agents}_{agent-id}.txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run the ensemble experiments. Other two files will be generated containing validation and test sets ground truths;
+- Be careful to not let multiple experiment runs override previous predictions in this folder!
+- With that in mind:
+   1. Run `experiments/hyper_learner.py` to fine-tune individual neural networks hyperparameters. As before, the `-h` flag shows instructions on how to set parameters to match the setup described in the paper. Don't forget to store the produced logs to extract results, which are used to compute fine tuned models accuracy;
+   2. Just don't forget to add the `--show_test` flag to the experiment, otherwise test metrics won't be displayed in the final logs;
+   3. This script should be executed only once, since it will generate 15 models. In the final lines of the logs it's possible to retrieve a list of accuracies to compute the mean and standard error.
