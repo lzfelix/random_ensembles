@@ -74,7 +74,7 @@ Before running this experiments, notice that:
 To learn an ensemble it's necessary to first train a set of K weak learners, where K stands for the number of models to be combined. Recall that after training a set of weak learners some text files are generated under `./prediction/` folder with the outputs of each models to the validation and test sets. Ensemble learning is based on the validation set and final metrics are computed on the test set.
 
 ### 1. Optimized weights ensembles
-1. Simply run `python experiments/ensemble_learner.py {path-to-validation-ground-truth-labels} {path-to-test-ground-truth-labels} -val_preds L --show_tests`. Running the script with the `-h` flag shows extra details on how to use it. In this case, `L` stands for a list of `K` networks outputs in the validation set. So, to train a ensemble based on three models, `L = ./predictions/mnist_bh_3_i.txt ./predictions/mnist_bh_3_j.txt ./predictions/mnist_bh_3_k.txt`, where `i`, `j`, `k` are weak learners' ids. The script `experiments/ensemble_learner.sh` also shows how the Python script can be invoked with multiple models;
+1. Run `python experiments/ensemble_learner.py {path-to-validation-ground-truth-labels} {path-to-test-ground-truth-labels} -val_preds L --show_tests`. Running the script with the `-h` flag shows extra details on how to use it. In this case, `L` stands for a list of `K` networks outputs in the validation set. So, to train a ensemble based on three models, `L = ./predictions/mnist_bh_3_i.txt ./predictions/mnist_bh_3_j.txt ./predictions/mnist_bh_3_k.txt`, where `i`, `j`, `k` are weak learners' ids. The script `experiments/ensemble_learner.sh` also shows how the Python script can be invoked with multiple models;
 2. This process is usually pretty fast and it's possible to find in the end of the logs:
   - The weight given to each model as a Python list
   - Each model individual accuracy on valiadtion and test set
@@ -84,7 +84,9 @@ To learn an ensemble it's necessary to first train a set of K weak learners, whe
 4. Just to recap: this step can be performed with the fine-tuned models (from Part I, step 2) and with models trained with random hyperparameters (from Part I, step 3). By doing and varying `K=[5, 10, 15]` it's possible to reproduce the results for all columns in row `Optimized` from Table 3 in the manuscript.
 
 ### 2. Majority-vote ensembles
-TODO
+1. This procedure is similar as the one in Step 1, but the script is different. Use `python experiments/ensemble_baseline.py [majority|uniform] {path-to-validation-ground-truth-labels} {path-to-test-ground-truth-labels} -val_preds L --show_tests`. The difference is that now it's necessary to supply the ensemling strategy to compute metrics, which is either `majority` (for this kind ensemble) or `uniform` for the ensembles from Part II, step 3;
+2. Once again: all models supplied in the list `L` will be used to compute the ensemble;
+3. Since this strategy is deterministic, there's no need to repeat it multiple times, since given the same models the output will always be the same, thus yielding zero stddev and mean=single observation value.
 
 ### 3. 1/K ensembles
-TODO
+1. Please refer to instructions in Part II, step 2.
