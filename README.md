@@ -13,10 +13,9 @@ To reproduce a smaller version of the code and get an overall idea, please run
     + [2. Training models with hyperparameters fine-tuned via PSO and BH](#2-training-models-with-hyperparameters-fine-tuned-via-pso-and-bh)
     + [3. Training models with random hyperparameters](#3-training-models-with-random-hyperparameters)
   * [Part II: Ensembles](#part-ii--ensembles)
-    + [Meta heuristic-based ensembles](#meta-heuristic-based-ensembles)
-    + [Majority-voting ensembles](#majority-voting-ensembles)
-    + [Weighted-voting ensembles](#weighted-voting-ensembles)
-
+    + [1. Optimized weights ensembles](#1-optimized-weights-ensembles)
+    + [2. Majority-vote ensembles](#2-majority-vote-ensembles)
+    + [3. 1/K ensembles](#3-1k-ensembles)
 
 
 # Scripts
@@ -56,7 +55,7 @@ Results reproduction is divided in two parts: first we describe how to reproduce
 ### 2. Training models with hyperparameters fine-tuned via PSO and BH
 Before running this experiments, notice that:
 
-- This step will store the top k individual network predictions for training and test set at `experiments/predictions/{dataset-name}_{metaheuristic-name}_{n-agents}_{agent-id}.txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run the ensemble experiments. Other two files will be generated containing validation and test sets ground truths;
+- This step will store the top `K` individual network predictions for training and test set at `experiments/predictions/{dataset-name}_{metaheuristic-name}_{n-agents}_{agent-id}.txt`. Test set predictions terminate with `_tst` suffix. These files are necessary to run the ensemble experiments. Other two files will be generated containing validation and test sets ground truths;
 - Be careful to not let multiple experiment runs override previous predictions in this folder!
 - With that in mind:
    1. Run `experiments/hyper_learner.py` to fine-tune individual neural networks hyperparameters. As before, the `-h` flag shows instructions on how to set parameters to match the setup described in the paper. Don't forget to store the produced logs to extract results, which are used to compute fine tuned models accuracy;
@@ -66,17 +65,26 @@ Before running this experiments, notice that:
 
 ### 3. Training models with random hyperparameters
 1. To train models with random hyperparameters run `python random_learner.py` and store the logs in an appropriate location;
-2. Predictions will be stored in `experiments/predictions/{dataset-name}_random_{model-id}.txt` and these will be used for ensemble learning;
+2. Predictions will be stored in `experiments/predictions/{dataset-name}_random_{model-id}.txt` along with two additional files with ground truth labels for the validation and test sets, respectivelly;
 3. Once again, there's no parser for this experiment since the logs will contain the relevant results in its last rows.
 
 
 ## Part II: Ensembles
 
-### Optimized weights ensembles
+To learn an ensemble it's necessary to first train a set of K weak learners, where K stands for the number of models to be combined. Recall that after training a set of weak learners some text files are generated under `./prediction/` folder with the outputs of each models to the validation and test sets. Ensemble learning is based on the validation set and final metrics are computed on the test set.
+
+### 1. Optimized weights ensembles
+1. Simply run `python experiments/ensemble_learner.py {path-to-validation-ground-truth-labels} {path-to-test-ground-truth-labels} -val_preds L --show_tests`. Running the script with the `-h` flag shows extra details on how to use it. In this case, `L` stands for a list of `K` networks outputs in the validation set. So, to train a ensemble based on three models, `L = ./predictions/mnist_bh_3_i.txt ./predictions/mnist_bh_3_j.txt ./predictions/mnist_bh_3_k.txt`, where `i`, `j`, `k` are weak learners' ids. The script `experiments/ensemble_learner.sh` also shows how the Python script can be invoked with multiple models;
+2. This process is usually pretty fast and it's possible to find in the end of the logs:
+  - The weight given to each model as a Python list
+  - Each model individual accuracy on valiadtion and test set
+  - The ensemble performance on the validation and test sets
+  - How long it took to train the ensemble
+3. This process must be repeated 15 times to compute the mean accuracy and standard deviation reported in the paper.
+4. Just to recap: this step can be performed with the fine-tuned models (from Part I, step 2) and with models trained with random hyperparameters (from Part I, step 3). By doing so it's possible to reproduce the results for all columns in row `Optimized` from Table 3 in the manuscript.
+
+### 2. Majority-vote ensembles
 TODO
 
-### Majority-voting ensembles
-TODO
-
-### 1/K ensembles
+### 3. 1/K ensembles
 TODO
