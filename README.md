@@ -81,7 +81,7 @@ To learn an ensemble it's necessary to first train a set of K weak learners, whe
   - The ensemble performance on the validation and test sets
   - How long it took to train the ensemble
 3. This process must be repeated 15 times to compute the mean accuracy and standard deviation reported in the paper.
-4. Just to recap: this step can be performed with the fine-tuned models (from Part I, step 2) and with models trained with random hyperparameters (from Part I, step 3). By doing so it's possible to reproduce the results for all columns in row `Optimized` from Table 3 in the manuscript.
+4. Just to recap: this step can be performed with the fine-tuned models (from Part I, step 2) and with models trained with random hyperparameters (from Part I, step 3). By doing and varying `K=[5, 10, 15]` it's possible to reproduce the results for all columns in row `Optimized` from Table 3 in the manuscript.
 
 ### 2. Majority-vote ensembles
 TODO
