@@ -72,11 +72,11 @@ Before running this experiments, notice that:
 
 ## Part II: Ensembles
 
-### Meta heuristic-based ensembles
+### Optimized weights ensembles
 TODO
 
 ### Majority-voting ensembles
 TODO
 
-### Weighted-voting ensembles
+### 1/K ensembles
 TODO
