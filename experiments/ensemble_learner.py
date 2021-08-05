@@ -1,9 +1,9 @@
 import argparse
-from typing import List
 
 import numpy as np
 from misc import utils
 from models import ensemble
+from models import textio
 
 from opytimizer.optimizers.swarm import PSO
 
@@ -28,21 +28,12 @@ def _show_files(split_name: str, ground, preds):
     print()
 
 
-def deduce_test_files(filepaths: List[str]) -> List[str]:
-    test_files = list()
-    for filepath in filepaths:
-        extension_dot = filepath.rfind('.')
-        test_file = filepath[:extension_dot] + '_tst' + filepath[extension_dot:]
-        test_files.append(test_file)
-    return test_files
-
-
 if __name__ == '__main__':
     exec_args = get_exec_args()
-    tst_preds = deduce_test_files(exec_args.val_preds)
+    tst_preds = textio.deduce_test_files(exec_args.val_preds)
 
-    _show_files('validation', exec_args.val_ground, exec_args.val_preds)
-    _show_files('test', exec_args.tst_ground, tst_preds)
+    textio.show_files_list('validation', exec_args.val_ground, exec_args.val_preds)
+    textio.show_files_list('test', exec_args.tst_ground, tst_preds)
     print(exec_args)
 
     val_all_preds, val_y_true = ensemble.load_candidates_preds(exec_args.val_preds, exec_args.val_ground)

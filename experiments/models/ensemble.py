@@ -60,8 +60,8 @@ def evaluate_ensemble(w: np.ndarray,
     acc = (y_hat == y_true).sum() / y_true.shape[0]
     return acc
 
-def evaluate_majority_voting(y_pred: np.ndarray,
-                      y_true: np.ndarray) -> float:
+
+def evaluate_majority_voting(y_pred: np.ndarray, y_true: np.ndarray) -> float:
     """Calculates the majority voting between models and compute its accuracy.
 
     # Arguments
