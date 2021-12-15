@@ -4,7 +4,6 @@ To reproduce a smaller version of the code and get an overall idea, please run
 
 
 # Table of Contents
-- [Random Ensembles](#random-ensembles)
 - [Scripts](#scripts)
 - [Setup](#setup)
 - [Reproducing results](#reproducing-results)
